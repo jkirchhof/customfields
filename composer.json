@@ -1,0 +1,27 @@
+{
+    "name": "jkirchhof/custom-fields",
+    "type": "wordpress-plugin",
+    "repositories": [
+        {
+            "type": "git",
+            "url": "https://github.com/jkirchhof/non-public-access"
+        }
+    ],
+    "require": {
+        "symfony/yaml": "^3.3"
+    },
+    "require-dev": {
+        "phpunit/phpunit": "^6.3",
+        "phpunit/php-invoker": "^1.1",
+        "jkirchhof/non-public-access": "@dev"
+    },
+    "authors": [
+        {
+            "name": "Joe Kirchhof",
+            "email": "joe@obscurae.com"
+        }
+    ],
+    "autoload": {
+        "psr-4": {"CustomFields\\": "src/"}
+    }
+}
