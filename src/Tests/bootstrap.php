@@ -15,7 +15,7 @@ require_once $_tests_dir . '/includes/functions.php';
 
 // Manually load the plugin being tested.
 tests_add_filter('muplugins_loaded', function () {
-  require dirname(dirname(__FILE__)) . '/customfields.php';
+  require dirname(dirname(__FILE__)) . '/../customfields.php';
 });
 
 // Start up the WP testing environment.

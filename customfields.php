@@ -15,4 +15,4 @@ namespace CustomFields;
 
 require_once __DIR__ . '/vendor/autoload.php';
 
-$cfs = CustomFields::loadDefinitions(__DIR__ . 'definitions');
+$cfs = CustomFieldsConfig::loadDefinitions(__DIR__ . '/definitions');

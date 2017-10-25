@@ -16,7 +16,33 @@ class CustomFieldsConfigTest extends \WP_UnitTestCase {
    * No return when definition parsing fails. Exception was properly handled.
    */
   public function testNoDefinitionsException() {
-    $this->assertNull(CustomFieldsConfig::parseDefinitions(''));
+    $this->assertNull(CustomFieldsConfig::loadDefinitions(''));
+  }
+
+  /**
+   * Find definition's primary YAML file.
+   */
+  public function testFindDefinitions() {
+    $result = CustomFieldsConfig::findDefinitions(__DIR__ . '/definitions');
+    $this->assertEquals($result, ['sample' => __DIR__ . '/definitions/sample']);
+  }
+
+  /**
+   * Exception when no definitions are found.
+   *
+   * @expectedException \CustomFields\Exception\NoDefinitionsException
+   */
+  public function testFindDefinitionsNoneFound() {
+    $result = CustomFieldsConfig::findDefinitions(__DIR__ . '/definitions/broken');
+  }
+
+  /**
+   * Exception when no passed invalid directory.
+   *
+   * @expectedException \CustomFields\Exception\NoDefinitionsException
+   */
+  public function testFindDefinitionsInvalidDirectory() {
+    $result = CustomFieldsConfig::findDefinitions(__DIR__ . '/definitions/doesnotexist');
   }
 
   /**

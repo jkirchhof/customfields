@@ -18,13 +18,10 @@ class CustomFieldsConfig {
    *
    * @param string $definitionsPath
    *   Path to directory of definitions.
-   *
-   * @throws \CustomFields\Exception\NoDefinitionsException
-   *   Warning thrown if no definiitions are defined.
    */
   public static function loadDefinitions(string $definitionsPath) {
     try {
-      throw new NoDefinitionsException();
+      $definitionHashes = static::findDefinitions($definitionsPath);
     }
     catch (ExceptionInterface $e) {
       CustomFieldsWordpressAPI::printAdminNotice('' . $e);
@@ -34,6 +31,41 @@ class CustomFieldsConfig {
     // Hash each
     // Read matching hashes from DB
     // Build others and cache in DB, using hash as key.
+  }
+
+  /**
+   * Find YAML definitions.
+   *
+   * @param string $definitionsPath
+   *   Path to directory of definitions.
+   *
+   * @return array
+   *   Array of definition_name => definition_directory_path.
+   *
+   * @throws \CustomFields\Exception\NoDefinitionsException
+   *   Warning thrown if no definiitions are defined.
+   */
+  public static function findDefinitions(string $definitionsPath) {
+    if (is_dir($definitionsPath)) {
+      $dir = dir($definitionsPath);
+    }
+    if (empty($dir)) {
+      throw new NoDefinitionsException();
+    }
+    $definitions = [];
+    while (($defName = $dir->read()) !== FALSE) {
+      if ($defName[0] != '.' && is_dir($definitionsPath . '/' . $defName)) {
+        $defDir = $definitionsPath . '/' . $defName;
+        $defPath = $defDir . '/' . $defName . '.yml';
+        if (file_exists($defPath)) {
+          $definitions[$defName] = $defDir;
+        }
+      }
+    };
+    if (empty($definitions)) {
+      throw new NoDefinitionsException();
+    }
+    return $definitions;
   }
 
   /**
