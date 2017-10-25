@@ -1,7 +1,14 @@
-<phpunit bootstrap="vendor/autoload.php">
+<phpunit
+  bootstrap="src/Tests/bootstrap.php"
+  backupGlobals="false"
+  colors="true"
+  convertErrorsToExceptions="true"
+  convertNoticesToExceptions="true"
+  convertWarningsToExceptions="true"
+  >
   <testsuites>
-    <testsuite name="initial tests">
-      <directory>src/tests</directory>
+    <testsuite>
+      <directory>src/Tests</directory>
     </testsuite>
   </testsuites>
 </phpunit>
