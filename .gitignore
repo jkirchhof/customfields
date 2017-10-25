@@ -1,2 +1,5 @@
-vendor/
+/vendor/
+/definitions/*
+!/definitions/sample
+.DS_Store
 
