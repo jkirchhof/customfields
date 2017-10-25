@@ -46,6 +46,23 @@ class CustomFieldsConfigTest extends \WP_UnitTestCase {
   }
 
   /**
+   * Test for hash of directory and contents.
+   */
+  public function testHashDirectory() {
+    $result = CustomFieldsConfig::hashDirectory(__DIR__ . '/definitions/broken');
+    $this->assertEquals($result, 'c0f2cae28e0245505f88e45674aa33d5b5843da5');
+  }
+
+  /**
+   * Exception when no passed invalid directory.
+   *
+   * @expectedException \CustomFields\Exception\HashException
+   */
+  public function testHashDirectoryInvalidDirectory() {
+    $result = CustomFieldsConfig::hashDirectory(__DIR__ . '/definitions/doesnotexist');
+  }
+
+  /**
    * Test \CustomFields\CustomFieldsConfig::parseDefinition.
    */
   public function testParseDefinition() {

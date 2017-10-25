@@ -4,6 +4,7 @@ namespace CustomFields;
 
 use Symfony\Component\Yaml\Yaml;
 use CustomFields\Exception\NoDefinitionsException;
+use CustomFields\Exception\HashException;
 use CustomFields\Exception\ExceptionInterface;
 
 /**
@@ -21,16 +22,22 @@ class CustomFieldsConfig {
    */
   public static function loadDefinitions(string $definitionsPath) {
     try {
-      $definitionHashes = static::findDefinitions($definitionsPath);
+      $definitions = static::findDefinitions($definitionsPath);
+      $definitionHashes = array_map(['static', 'hashDirectory'], $definitions);
     }
     catch (ExceptionInterface $e) {
       CustomFieldsWordpressAPI::printAdminNotice('' . $e);
       return;
     }
-    // Find custom post types
-    // Hash each
-    // Read matching hashes from DB
-    // Build others and cache in DB, using hash as key.
+    // $definitions : type => $path to dir.
+    // $definitionHashes : type => hash.
+    // ---
+    // Check database for each hash.
+    // If found, replace hash with db contents.
+    // If not found:
+    // - 1) process with yaml parser,
+    // - 2) cache in db,
+    // - 3) replace hash with value.
   }
 
   /**
@@ -66,6 +73,43 @@ class CustomFieldsConfig {
       throw new NoDefinitionsException();
     }
     return $definitions;
+  }
+
+  /**
+   * Generate a single hash for a directory.
+   *
+   * Ignores hidden files.  Hashes file contents as well as file and directory
+   * names.
+   *
+   * @param string $path
+   *   Path to directory.
+   *
+   * @return string
+   *   Single sha-1 hash.
+   */
+  public static function hashDirectory(string $path) {
+    if (is_dir($path)) {
+      $dir = dir($path);
+    }
+    if (empty($dir)) {
+      throw new HashException();
+    }
+    $hashes = [sha1($path)];
+    while (($file = $dir->read()) !== FALSE) {
+      if ($file[0] != '.') {
+        $fullPath = $path . '/' . $file;
+        if (is_dir($fullPath)) {
+          $hashes[] = self::hashDirectory($fullPath);
+        }
+        else {
+          // Hash file name and contents so renaming files changes hash.
+          $hashes[] = sha1($fullPath);
+          $hashes[] = sha1_file($fullPath);
+        }
+      }
+    }
+    $hash = sha1(implode('', $hashes));
+    return $hash;
   }
 
   /**
