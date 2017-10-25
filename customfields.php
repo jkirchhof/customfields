@@ -11,8 +11,8 @@ Description: API for custom fields, types, and metaboxes
 Author: Joe Kirchhof.
  */
 
-use CustomFields\CustomFields;
+namespace CustomFields;
 
 require_once __DIR__ . '/vendor/autoload.php';
 
-$cf = new CustomFields();
+$cfs = CustomFields::loadDefinitions(__DIR__ . 'definitions');
