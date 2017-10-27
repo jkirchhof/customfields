@@ -7,7 +7,7 @@ use CustomFields\Exception\NoDefinitionsException;
 use CustomFields\Exception\HashException;
 use CustomFields\Exception\CacheNullException;
 use CustomFields\Exception\ExceptionInterface;
-use CustomFields\Notice\WPAdminNotice;
+use CustomFields\Notice\WPNotice;
 use Symfony\Component\Yaml\Yaml;
 use Symfony\Component\Yaml\Exception\ParseException;
 
@@ -28,7 +28,7 @@ class CustomFieldsInit {
    */
   public function __construct() {
     $this->cache = new WPOptionsCache();
-    $this->notifier = new WPAdminNotice();
+    $this->notifier = new WPNotice();
     return $this;
   }
 

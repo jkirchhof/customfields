@@ -3,9 +3,9 @@
 namespace CustomFields\Notice;
 
 /**
- * Calls to Wordpress API.
+ * Notices using Wordpress API.
  */
-class WPAdminNotice implements NoticeInterface {
+class WPNotice implements NoticeInterface {
 
   /**
    * {@inheritdoc}
