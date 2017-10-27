@@ -1,2 +1,5 @@
 name: sample
-
+details:
+  - zero
+  - one
+  - two
