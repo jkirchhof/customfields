@@ -43,9 +43,9 @@ class CustomFieldsInit {
   }
 
   /**
-   * Get admin notification object.
+   * Get notification object.
    *
-   * @return // @TODO add interface
+   * @return CustomFields\Notice\NoticeInterface
    *   Admin notification object.
    */
   public function getNotifier() {
