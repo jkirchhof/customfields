@@ -49,7 +49,7 @@ class CustomFieldsInitTest extends \WP_UnitTestCase {
    *
    * @expectedException \CustomFields\Exception\NoDefinitionsException
    */
-  public function testFindDefinitionsInvalidDirectory() {
+  public function testFindDefinitionsInvalidDirectory () {
     $result = self::invokeNonPublicMethod('\CustomFields\CustomFieldsInit', 'findDefinitions', __DIR__ . '/definitions/doesnotexist');
   }
 
@@ -59,7 +59,7 @@ class CustomFieldsInitTest extends \WP_UnitTestCase {
   public function testHashDirectory() {
     $cf = new CustomFieldsInit();
     $result = $cf->hashDirectory(__DIR__ . '/definitions/broken');
-    $this->assertEquals($result, 'c0f2cae28e0245505f88e45674aa33d5b5843da5');
+    $this->assertEquals($result, '4de9995d63e4450a251a433aa6b6d4011db28776');
   }
 
   /**

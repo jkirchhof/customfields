@@ -12,7 +12,7 @@ use Symfony\Component\Yaml\Yaml;
 use Symfony\Component\Yaml\Exception\ParseException;
 
 /**
- * Method for managing configurations.
+ * Initialize Custom Fields and find configurations.
  */
 class CustomFieldsInit {
 
