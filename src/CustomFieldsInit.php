@@ -29,7 +29,6 @@ class CustomFieldsInit {
   public function __construct() {
     $this->cache = new WPOptionsCache();
     $this->notifier = new WPNotice();
-    return $this;
   }
 
   /**
@@ -83,7 +82,7 @@ class CustomFieldsInit {
       $cf->getNotifier()->queueAdminNotice('' . $e);
       return;
     }
-    $definitions = $cf->collectDefinitions($definitionHashes, $definitionDirs);
+    $cf->definitions = $cf->collectDefinitions($definitionHashes, $definitionDirs);
     return $cf;
   }
 

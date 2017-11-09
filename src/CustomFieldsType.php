@@ -12,6 +12,23 @@ class CustomFieldsType {
   protected $pluralName;
 
   /**
+   * Constructor.  To be invoked with static::factory().
+   *
+   * @param string $singularName
+   *   Singular name of type used within WP.
+   * @param string $pluralName
+   *   Plural name of type used within WP.
+   * @param array $definition
+   *   Definition used to build type.
+   */
+  protected function __construct(string $singularName, string $pluralName, array $definition) {
+    $this->singularName = $singularName;
+    $this->pluralName = $pluralName;
+    $this->definition = $definition;
+    return $this;
+  }
+
+  /**
    * Factory to create type/fields object from definition arrays.
    *
    * @param array $defArray
@@ -26,15 +43,20 @@ class CustomFieldsType {
     // @TODO Check 3 vars above. If bad, return exception.
     $cfType = new static($singularName, $pluralName, $defArray);
     // @TODO - only call for non-existing post types - check those first.
-    add_action('init', $cfType, 'declare_post_type'));
+    add_action('init', [$cfType, 'declarePostType']);
     return $cfType;
   }
 
   /**
    * Callback for 'init' action to register this type with WP.
+   *
+   * @return static
    */
   public function declarePostType() {
-    register_post_type($this->getSingularName(), $this->getDefinition());
+    $name = $this->getSingularName();
+    $def = $this->getDefinition();
+    register_post_type($name, $def);
+    return $this;
   }
 
   /**
