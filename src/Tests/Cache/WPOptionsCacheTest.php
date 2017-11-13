@@ -48,7 +48,7 @@ class WPOptionsCacheTest extends \WP_UnitTestCase {
   /**
    * Test set for initial and redundant caching.
    */
-  public function testgSet() {
+  public function testSet() {
     $wpoc = new WPOptionsCache();
     $key = 'testkeye45674aa33d5b5843da5';
     $value = 'testvaluee45674aa33d5b5843da5';

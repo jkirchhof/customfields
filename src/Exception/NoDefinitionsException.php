@@ -12,7 +12,7 @@ class NoDefinitionsException extends RuntimeException {
    *
    * @var string
    */
-  protected $message = 'No definitions could be read.  CustomFields will be surpressed.  This may cause unexpected behavior.';
+  protected $message = 'No definitions could be read. CustomFields will be surpressed. This may cause unexpected behavior.';
 
   /**
    * String output of exception.

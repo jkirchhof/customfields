@@ -14,7 +14,7 @@ class NoDefinitionsExceptionTest extends \WP_UnitTestCase {
    */
   public function testNoDefinitionsException() {
     $exception = new NoDefinitionsException();
-    $message = 'No definitions could be read.  CustomFields will be surpressed.  This may cause unexpected behavior.';
+    $message = 'No definitions could be read. CustomFields will be surpressed. This may cause unexpected behavior.';
     $this->assertEquals($message, '' . $exception);
   }
 
