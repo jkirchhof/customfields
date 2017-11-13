@@ -1,11 +1,11 @@
 <?php
 
-namespace CustomFields\Notice;
+namespace CustomFields\Notifier;
 
 /**
  * Notices using Wordpress API.
  */
-class WPNotice implements NoticeInterface {
+class WPNotifier implements NotifierInterface {
 
   /**
    * {@inheritdoc}

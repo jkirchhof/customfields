@@ -1,11 +1,11 @@
 <?php
 
-namespace CustomFields\Notice;
+namespace CustomFields\Notifier;
 
 /**
  * Exception interface for all exceptions thrown by CustomFields.
  */
-interface NoticeInterface {
+interface NotifierInterface {
 
   /**
    * Show notice on admin pages.

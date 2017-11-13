@@ -1,3 +1,12 @@
-name: sample
 singular_name: sample
 plural_name: samples
+labels:
+  name: Sample
+  singular_name: Sample
+  add_new_item: Add New Sample
+  edit_item: Edit Sample
+  new_item: New Sample
+  view_item: View Sample
+public: true
+exclude_from_search: false
+hierarchical: true

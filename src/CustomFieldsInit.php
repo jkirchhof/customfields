@@ -7,7 +7,7 @@ use CustomFields\Exception\NoDefinitionsException;
 use CustomFields\Exception\HashException;
 use CustomFields\Exception\CacheNullException;
 use CustomFields\Exception\ExceptionInterface;
-use CustomFields\Notice\WPNotice;
+use CustomFields\Notifier\WPNotifier;
 use Symfony\Component\Yaml\Yaml;
 use Symfony\Component\Yaml\Exception\ParseException;
 
@@ -24,11 +24,12 @@ class CustomFieldsInit {
    * Set some defaults.
    *
    * Do not directly use constructor.  Initalize objects through static call to
-   * loadDefinitions().
+   * loadDefinitions(). Future versions may re-write the constructor such as
+   * by using a configuration file to set cache and notifier services.
    */
-  public function __construct() {
+  protected function __construct() {
     $this->cache = new WPOptionsCache();
-    $this->notifier = new WPNotice();
+    $this->notifier = new WPNotifier();
   }
 
   /**
@@ -44,7 +45,7 @@ class CustomFieldsInit {
   /**
    * Get notification object.
    *
-   * @return CustomFields\Notice\NoticeInterface
+   * @return CustomFields\Notifier\NotifierInterface
    *   Admin notification object.
    */
   public function getNotifier() {
@@ -76,10 +77,10 @@ class CustomFieldsInit {
     $cf = new static();
     try {
       $definitionDirs = $cf->findDefinitions($definitionsPath);
-      $definitionHashes = array_map([$cf, 'hashDirectory'], $definitionDirs);
+      $definitionHashes = array_map(['CustomFields\\CustomFieldsUtilities', 'hashDirectory'], $definitionDirs);
     }
     catch (ExceptionInterface $e) {
-      $cf->getNotifier()->queueAdminNotice('' . $e);
+      $cf->notifier->queueAdminNotice('' . $e);
       return;
     }
     $cf->definitions = $cf->collectDefinitions($definitionHashes, $definitionDirs);
@@ -122,46 +123,6 @@ class CustomFieldsInit {
   }
 
   /**
-   * Generate a single hash for a directory.
-   *
-   * Ignores hidden files.  Hashes file contents as well as file and directory
-   * names.
-   *
-   * @param string $path
-   *   Path to directory.
-   *
-   * @return string
-   *   Single sha-1 hash.
-   *
-   * @throws \CustomFields\Exception\HashException
-   *   Thrown if hash cannot be calculated.
-   */
-  public function hashDirectory(string $path) {
-    if (is_dir($path)) {
-      $dir = dir($path);
-    }
-    if (empty($dir)) {
-      throw new HashException();
-    }
-    $hashes = [sha1($path)];
-    while (($file = $dir->read()) !== FALSE) {
-      if ($file[0] != '.') {
-        $fullPath = $path . '/' . $file;
-        if (is_dir($fullPath)) {
-          $hashes[] = $this->hashDirectory($fullPath);
-        }
-        else {
-          // Hash file name and contents so renaming files changes hash.
-          $hashes[] = sha1($fullPath);
-          $hashes[] = sha1_file($fullPath);
-        }
-      }
-    }
-    $hash = sha1(implode('', $hashes));
-    return $hash;
-  }
-
-  /**
    * Retrieve each cached definition. Build and cache others.
    *
    * @param array $definitionHashes
@@ -176,12 +137,12 @@ class CustomFieldsInit {
     $definitions = [];
     foreach ($definitionHashes as $type => $hash) {
       try {
-        $definition = $this->getCache()->cacheGet($hash);
+        $definition = $this->cache->get($hash);
       }
       catch (CacheNullException $e) {
         $definition = $this->parseDefinition($definitionDirs[$type], $type);
         if ($definition) {
-          $this->getCache()->cacheset($hash, $definition);
+          $this->cache->set($hash, $definition);
         }
       }
       if ($definition) {

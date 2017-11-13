@@ -27,7 +27,7 @@ class WPOptionsCache implements CacheInterface {
   /**
    * {@inheritdoc}
    */
-  public function cacheGet(string $key) {
+  public function get(string $key) {
     $value = get_option(self::CACHE_PREFIX . $key, NULL);
     if ($value === NULL || $key == '') {
       throw new CacheNullException();
@@ -38,7 +38,7 @@ class WPOptionsCache implements CacheInterface {
   /**
    * {@inheritdoc}
    */
-  public function cacheSet(string $key, $value) {
+  public function set(string $key, $value) {
     // option_update() compares the current value with the value it's asked to
     // set.  If they're the same, it returns FALSE.  But it also returns FALSE
     // for errors.  So this repeats the duplicate value check.
@@ -46,7 +46,7 @@ class WPOptionsCache implements CacheInterface {
       throw new CacheSaveFailureException();
     }
     try {
-      $current_value = $this->cacheGet($key);
+      $current_value = $this->get($key);
     }
     catch (CacheNullException $e) {
       // Continue. $current_value is unset.

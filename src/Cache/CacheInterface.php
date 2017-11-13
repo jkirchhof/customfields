@@ -19,7 +19,7 @@ interface CacheInterface {
    * @throws \CustomFields\Exception\CacheNullException
    *   Thrown when cache does not contain value.
    */
-  public function cacheGet(string $key);
+  public function get(string $key);
 
   /**
    * Set value in cache.
@@ -32,6 +32,6 @@ interface CacheInterface {
    * @return bool
    *   TRUE if successfully cached.  FALSE on failure.
    */
-  public function cacheSet(string $key, $value);
+  public function set(string $key, $value);
 
 }
