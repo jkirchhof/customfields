@@ -2,7 +2,6 @@
 
 namespace CustomFields\Tests;
 
-use NonPublicAccess\NonPublicAccessTrait;
 use CustomFields\CustomFieldsInit;
 use CustomFields\Cache\CacheInterface;
 use CustomFields\Notifier\NotifierInterface;
@@ -11,8 +10,6 @@ use CustomFields\Notifier\NotifierInterface;
  * Tests for CustomFieldInit.
  */
 class CustomFieldsInitTest extends \WP_UnitTestCase {
-
-  use NonPublicAccessTrait;
 
   /**
    * Test getCache.
