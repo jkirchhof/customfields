@@ -4,6 +4,9 @@ namespace CustomFields\Tests;
 
 use CustomFields\CustomFields;
 use CustomFields\CustomFieldsType;
+use CustomFields\Cache\WPOptionsCache;
+use CustomFields\Notifier\WPNotifier;
+use CustomFields\Tests\Notifier\TestNotifier;
 
 /**
  * Tests for CustomFieldsType.
@@ -14,8 +17,9 @@ class CustomFieldsTypeTest extends \WP_UnitTestCase {
    * Test buildTypes().
    */
   public function testBuildTypes() {
-    $cfs = CustomFields::initialize(__DIR__ . '/definitions');
-    $result = CustomFieldsType::buildTypes($cfs);
+    $cf = new CustomFields(new WPOptionsCache(), new WPNotifier());
+    $cf->initialize(__DIR__ . '/definitions');
+    $result = CustomFieldsType::buildTypes($cf);
     foreach ($result as $r) {
       $this->assertInstanceOf(CustomFieldsType::class, $r);
     }
@@ -26,8 +30,9 @@ class CustomFieldsTypeTest extends \WP_UnitTestCase {
    */
   public function testBuildTypesCannotRedeclare() {
     $this->expectExceptionMessage('<strong>Cannot redefine type “post”</strong><br /> This definition could be parsed. This is like to cause unexpected behavior, including additional errors.');
-    $cfs = CustomFields::initialize(__DIR__ . '/baddefinitions', 'testing');
-    $result = CustomFieldsType::buildTypes($cfs);
+    $cf = new CustomFields(new WPOptionsCache(), new TestNotifier());
+    $cf->initialize(__DIR__ . '/baddefinitions');
+    $result = CustomFieldsType::buildTypes($cf);
   }
 
   /**
@@ -41,8 +46,9 @@ class CustomFieldsTypeTest extends \WP_UnitTestCase {
    * Test getDefinition().
    */
   public function testGetDefinition() {
-    $cfs = CustomFields::initialize(__DIR__ . '/definitions');
-    $result = CustomFieldsType::buildTypes($cfs)['testsample']->getDefinition();
+    $cf = new CustomFields(new WPOptionsCache(), new WPNotifier());
+    $cf->initialize(__DIR__ . '/definitions');
+    $result = CustomFieldsType::buildTypes($cf)['testsample']->getDefinition();
     $expected = [
       'labels' => [
         'name' => 'Sample',
@@ -63,8 +69,9 @@ class CustomFieldsTypeTest extends \WP_UnitTestCase {
    * Test getSingularName().
    */
   public function testGetSingularName() {
-    $cfs = CustomFields::initialize(__DIR__ . '/definitions');
-    $result = CustomFieldsType::buildTypes($cfs)['testsample']->getSingularName();
+    $cf = new CustomFields(new WPOptionsCache(), new WPNotifier());
+    $cf->initialize(__DIR__ . '/definitions');
+    $result = CustomFieldsType::buildTypes($cf)['testsample']->getSingularName();
     $expected = 'testsample';
     $this->assertEquals($result, $expected);
   }
@@ -73,8 +80,9 @@ class CustomFieldsTypeTest extends \WP_UnitTestCase {
    * Test getPluralName().
    */
   public function testGetPluralName() {
-    $cfs = CustomFields::initialize(__DIR__ . '/definitions');
-    $result = CustomFieldsType::buildTypes($cfs)['testsample']->getPluralName();
+    $cf = new CustomFields(new WPOptionsCache(), new WPNotifier());
+    $cf->initialize(__DIR__ . '/definitions');
+    $result = CustomFieldsType::buildTypes($cf)['testsample']->getPluralName();
     $expected = 'testsamples';
     $this->assertEquals($result, $expected);
   }

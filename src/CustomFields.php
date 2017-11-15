@@ -2,12 +2,11 @@
 
 namespace CustomFields;
 
-use CustomFields\Cache\WPOptionsCache;
+use CustomFields\Cache\CacheInterface;
+use CustomFields\Notifier\NotifierInterface;
 use CustomFields\Exception\NoDefinitionsException;
 use CustomFields\Exception\CacheNullException;
 use CustomFields\Exception\ExceptionInterface;
-use CustomFields\Notifier\WPNotifier;
-use CustomFields\Tests\Notifier\TestNotifier;
 use Symfony\Component\Yaml\Yaml;
 use Symfony\Component\Yaml\Exception\ParseException;
 
@@ -18,7 +17,8 @@ class CustomFields {
 
   protected $cache;
   protected $notifier;
-  protected $definitions = [];
+  protected $definitions;
+  protected $initalized;
 
   /**
    * Set some defaults.
@@ -27,19 +27,9 @@ class CustomFields {
    * initialize(). Future versions may re-write the constructor such as by using
    * a configuration file to set cache and notifier services.
    */
-  protected function __construct($environment) {
-    switch ($environment) {
-      case 'testing':
-        $this->cache = new WPOptionsCache();
-        $this->notifier = new TestNotifier();
-        break;
-
-      case 'prod':
-      default:
-        $this->cache = new WPOptionsCache();
-        $this->notifier = new WPNotifier();
-        break;
-    }
+  public function __construct(CacheInterface $cache, NotifierInterface $notifier) {
+    $this->cache = $cache;
+    $this->notifier = $notifier;
   }
 
   /**
@@ -73,33 +63,47 @@ class CustomFields {
   }
 
   /**
-   * Factory to initialize plugin.
+   * Check if object is initialized (with type definitions).
+   *
+   * @return bool
+   *   TRUE when initalized.  FALSE when not.
+   */
+  public function isInitialized() {
+    if (!empty($this->initalized)) {
+      return TRUE;
+    }
+    return FALSE;
+  }
+
+  /**
+   * Initialize plugin.  Can only succeed once per instance.
    *
    * Locate defitions for custom types, boxes, and fields. Find built
-   * definitions. Build others from YAML.
+   * definitions. Build others from YAML.  Can be re-run if initial attempt
+   * fails, but once initialized will not allow changes.
    *
    * @param string $definitionsPath
    *   Path to directory of definitions.
-   * @param string $environment
-   *   Allows other components to use production, dev, and testing configs.
    *
-   * @return null|static
-   *   On failure, return NULL.  Otherwise, static.
+   * @return static
    */
-  public static function initialize(string $definitionsPath, $environment = 'prod') {
+  public function initialize(string $definitionsPath) {
     // @TODO Add option to cache all types.  If found, return it here.
     // @TODO Create admin page to manage cached definitions.
-    $cf = new static($environment);
+    if ($this->isInitialized) {
+      return $this;
+    }
     try {
-      $definitionDirs = $cf->findDefinitions($definitionsPath);
+      $definitionDirs = $this->findDefinitions($definitionsPath);
       $definitionHashes = array_map(['CustomFields\\CustomFieldsUtilities', 'hashDirectory'], $definitionDirs);
     }
     catch (ExceptionInterface $e) {
-      $cf->notifier->queueAdminNotice('' . $e);
-      return NULL;
+      $this->getNotifier()->queueAdminNotice('' . $e);
+      return $this;
     }
-    $cf->definitions = $cf->collectDefinitions($definitionHashes, $definitionDirs);
-    return $cf;
+    $this->definitions = $this->collectDefinitions($definitionHashes, $definitionDirs);
+    $this->initalized = TRUE;
+    return $this;
   }
 
   /**

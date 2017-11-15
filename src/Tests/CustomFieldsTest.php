@@ -4,7 +4,9 @@ namespace CustomFields\Tests;
 
 use CustomFields\CustomFields;
 use CustomFields\Cache\CacheInterface;
+use CustomFields\Cache\WPOptionsCache;
 use CustomFields\Notifier\NotifierInterface;
+use CustomFields\Notifier\WPNotifier;
 
 /**
  * Tests for CustomFieldInit.
@@ -14,25 +16,51 @@ class CustomFieldsTest extends \WP_UnitTestCase {
   /**
    * Test initialize().
    */
-  public function testinitialize() {
-    $cf = CustomFields::initialize(__DIR__ . '/definitions');
+  public function testInitialize() {
+    $cf = new CustomFields(new WPOptionsCache(), new WPNotifier());
+    $cf->initialize(__DIR__ . '/definitions');
     $this->assertInstanceOf(CustomFields::class, $cf);
   }
 
   /**
    * No return when definition parsing fails. Exceptions are properly handled.
+   *
+   * Empty path to definiton.
    */
-  public function testNoDefinitionsException() {
-    $this->assertNull(CustomFields::initialize(''));
-    $this->assertNull(CustomFields::initialize(__DIR__ . '/definitions/broken'));
-    $this->assertNull(CustomFields::initialize(__DIR__ . '/definitions/doesnotexist'));
+  public function testNoDefinitionsExceptionEmptyDef() {
+    $cf = new CustomFields(new WPOptionsCache(), new WPNotifier());
+    $cf->initialize('');
+    $this->assertFalse($cf->isInitialized());
+  }
+
+  /**
+   * No return when definition parsing fails. Exceptions are properly handled.
+   *
+   * Definition signature is bad.
+   */
+  public function testNoDefinitionsExceptionBrokenDef() {
+    $cf = new CustomFields(new WPOptionsCache(), new WPNotifier());
+    $cf->initialize(__DIR__ . '/definitions/broken');
+    $this->assertFalse($cf->isInitialized());
+  }
+
+  /**
+   * No return when definition parsing fails. Exceptions are properly handled.
+   *
+   * Path does not resolve.
+   */
+  public function testNoDefinitionsExceptionBadPath() {
+    $cf = new CustomFields(new WPOptionsCache(), new WPNotifier());
+    $cf->initialize(__DIR__ . '/definitions/doesnotexist');
+    $this->assertFalse($cf->isInitialized());
   }
 
   /**
    * Test getCache.
    */
   public function testGetCache() {
-    $cf = CustomFields::initialize(__DIR__ . '/definitions');
+    $cf = new CustomFields(new WPOptionsCache(), new WPNotifier());
+    $cf->initialize(__DIR__ . '/definitions');
     $this->assertInstanceOf(CacheInterface::class, $cf->getCache());
   }
 
@@ -40,7 +68,8 @@ class CustomFieldsTest extends \WP_UnitTestCase {
    * Test getNotiofier.
    */
   public function testGetNotifier() {
-    $cf = CustomFields::initialize(__DIR__ . '/definitions');
+    $cf = new CustomFields(new WPOptionsCache(), new WPNotifier());
+    $cf->initialize(__DIR__ . '/definitions');
     $this->assertInstanceOf(NotifierInterface::class, $cf->getNotifier());
   }
 
@@ -48,7 +77,8 @@ class CustomFieldsTest extends \WP_UnitTestCase {
    * Test getDefinitions.
    */
   public function testGetDefinitions() {
-    $cf = CustomFields::initialize(__DIR__ . '/definitions');
+    $cf = new CustomFields(new WPOptionsCache(), new WPNotifier());
+    $cf->initialize(__DIR__ . '/definitions');
     $expected = [
       'testsample' => [
         'singular_name' => 'testsample',

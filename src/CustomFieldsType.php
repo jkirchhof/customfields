@@ -24,7 +24,7 @@ class CustomFieldsType {
    * @param array $definition
    *   Definition used to build type.
    * @param CustomFields $cfs
-   *   CustomFieldsInit container; includes cache and notifier instances.
+   *   CustomFields object used as container; includes cache and notifier.
    */
   protected function __construct(string $singularName, string $pluralName, array $definition, CustomFields $cfs) {
     $this->singularName = $singularName;

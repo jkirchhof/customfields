@@ -13,9 +13,11 @@ Author: Joe Kirchhof.
 
 namespace CustomFields;
 
+use CustomFields\Cache\WPOptionsCache;
+use CustomFields\Notifier\WPNotifier;
+
 require_once __DIR__ . '/vendor/autoload.php';
 
-$cfs = CustomFields::initialize(__DIR__ . '/definitions');
-if ($cfs) {
-  $cfTypes = CustomFieldsType::buildTypes($cfs);
-}
+$cfs = new CustomFields(new WPOptionsCache(), new WPNotifier());
+$cfs->initialize(__DIR__ . '/definitions');
+$cfTypes = CustomFieldsType::buildTypes($cfs);
