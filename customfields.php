@@ -15,6 +15,7 @@ namespace CustomFields;
 
 require_once __DIR__ . '/vendor/autoload.php';
 
-$cfs = CustomFieldsInit::loadDefinitions(__DIR__ . '/definitions');
-$cfDefs = $cfs->getDefinitions();
-array_walk($cfDefs, ['CustomFields\\CustomFieldsType', 'factory']);
+$cfs = CustomFields::initialize(__DIR__ . '/definitions');
+if ($cfs) {
+  $cfTypes = CustomFieldsType::buildTypes($cfs);
+}

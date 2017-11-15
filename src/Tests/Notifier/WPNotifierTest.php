@@ -16,6 +16,9 @@ class WPNotifierTest extends \WP_UnitTestCase {
    * "admin_notices". If a notice is default behavior of the test configuration
    * (such as if no definitions are parsed), extra output fill make the test
    * fail.
+   *
+   * Use a mock notifier such as CustomFields\Tests\Notifier\TestNotifier
+   * to check notifier output in tests.
    */
   public function testQueueAdminNotice() {
     $adminNotifier = new WPNotifier();

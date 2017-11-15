@@ -4,32 +4,42 @@ namespace CustomFields;
 
 use CustomFields\Cache\WPOptionsCache;
 use CustomFields\Exception\NoDefinitionsException;
-use CustomFields\Exception\HashException;
 use CustomFields\Exception\CacheNullException;
 use CustomFields\Exception\ExceptionInterface;
 use CustomFields\Notifier\WPNotifier;
+use CustomFields\Tests\Notifier\TestNotifier;
 use Symfony\Component\Yaml\Yaml;
 use Symfony\Component\Yaml\Exception\ParseException;
 
 /**
  * Initialize Custom Fields and find configurations.
  */
-class CustomFieldsInit {
+class CustomFields {
 
   protected $cache;
   protected $notifier;
-  protected $definitions;
+  protected $definitions = [];
 
   /**
    * Set some defaults.
    *
    * Do not directly use constructor.  Initalize objects through static call to
-   * loadDefinitions(). Future versions may re-write the constructor such as
-   * by using a configuration file to set cache and notifier services.
+   * initialize(). Future versions may re-write the constructor such as by using
+   * a configuration file to set cache and notifier services.
    */
-  protected function __construct() {
-    $this->cache = new WPOptionsCache();
-    $this->notifier = new WPNotifier();
+  protected function __construct($environment) {
+    switch ($environment) {
+      case 'testing':
+        $this->cache = new WPOptionsCache();
+        $this->notifier = new TestNotifier();
+        break;
+
+      case 'prod':
+      default:
+        $this->cache = new WPOptionsCache();
+        $this->notifier = new WPNotifier();
+        break;
+    }
   }
 
   /**
@@ -70,18 +80,23 @@ class CustomFieldsInit {
    *
    * @param string $definitionsPath
    *   Path to directory of definitions.
+   * @param string $environment
+   *   Allows other components to use production, dev, and testing configs.
+   *
+   * @return null|static
+   *   On failure, return NULL.  Otherwise, static.
    */
-  public static function loadDefinitions(string $definitionsPath) {
+  public static function initialize(string $definitionsPath, $environment = 'prod') {
     // @TODO Add option to cache all types.  If found, return it here.
     // @TODO Create admin page to manage cached definitions.
-    $cf = new static();
+    $cf = new static($environment);
     try {
       $definitionDirs = $cf->findDefinitions($definitionsPath);
       $definitionHashes = array_map(['CustomFields\\CustomFieldsUtilities', 'hashDirectory'], $definitionDirs);
     }
     catch (ExceptionInterface $e) {
       $cf->notifier->queueAdminNotice('' . $e);
-      return;
+      return NULL;
     }
     $cf->definitions = $cf->collectDefinitions($definitionHashes, $definitionDirs);
     return $cf;

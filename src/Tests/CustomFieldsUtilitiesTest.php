@@ -14,7 +14,7 @@ class CustomFieldsUtilitiesTest extends \WP_UnitTestCase {
    */
   public function testHashDirectory() {
     $result = CustomFieldsUtilities::hashDirectory(__DIR__ . '/definitions/broken');
-    $this->assertEquals($result, '4de9995d63e4450a251a433aa6b6d4011db28776');
+    $this->assertEquals($result, 'e1ac6baef1a9c87ce0f307c9549d936c4b987f9e');
   }
 
   /**

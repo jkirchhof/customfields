@@ -1,3 +1,5 @@
+singular_name: testsample
+plural_name: testsamples
 labels:
   name: Sample
   singular_name: Sample

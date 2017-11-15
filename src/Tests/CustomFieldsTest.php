@@ -2,20 +2,37 @@
 
 namespace CustomFields\Tests;
 
-use CustomFields\CustomFieldsInit;
+use CustomFields\CustomFields;
 use CustomFields\Cache\CacheInterface;
 use CustomFields\Notifier\NotifierInterface;
 
 /**
  * Tests for CustomFieldInit.
  */
-class CustomFieldsInitTest extends \WP_UnitTestCase {
+class CustomFieldsTest extends \WP_UnitTestCase {
+
+  /**
+   * Test initialize().
+   */
+  public function testinitialize() {
+    $cf = CustomFields::initialize(__DIR__ . '/definitions');
+    $this->assertInstanceOf(CustomFields::class, $cf);
+  }
+
+  /**
+   * No return when definition parsing fails. Exceptions are properly handled.
+   */
+  public function testNoDefinitionsException() {
+    $this->assertNull(CustomFields::initialize(''));
+    $this->assertNull(CustomFields::initialize(__DIR__ . '/definitions/broken'));
+    $this->assertNull(CustomFields::initialize(__DIR__ . '/definitions/doesnotexist'));
+  }
 
   /**
    * Test getCache.
    */
   public function testGetCache() {
-    $cf = CustomFieldsInit::loadDefinitions(__DIR__ . '/definitions');
+    $cf = CustomFields::initialize(__DIR__ . '/definitions');
     $this->assertInstanceOf(CacheInterface::class, $cf->getCache());
   }
 
@@ -23,7 +40,7 @@ class CustomFieldsInitTest extends \WP_UnitTestCase {
    * Test getNotiofier.
    */
   public function testGetNotifier() {
-    $cf = CustomFieldsInit::loadDefinitions(__DIR__ . '/definitions');
+    $cf = CustomFields::initialize(__DIR__ . '/definitions');
     $this->assertInstanceOf(NotifierInterface::class, $cf->getNotifier());
   }
 
@@ -31,9 +48,11 @@ class CustomFieldsInitTest extends \WP_UnitTestCase {
    * Test getDefinitions.
    */
   public function testGetDefinitions() {
-    $cf = CustomFieldsInit::loadDefinitions(__DIR__ . '/definitions');
+    $cf = CustomFields::initialize(__DIR__ . '/definitions');
     $expected = [
-      'sample' => [
+      'testsample' => [
+        'singular_name' => 'testsample',
+        'plural_name' => 'testsamples',
         'labels' => [
           'name' => 'Sample',
           'singular_name' => 'Sample',
@@ -49,23 +68,6 @@ class CustomFieldsInitTest extends \WP_UnitTestCase {
     ];
     $result = $cf->getDefinitions();
     $this->assertEquals($result, $expected);
-  }
-
-  /**
-   * No return when definition parsing fails. Exceptions are properly handled.
-   */
-  public function testNoDefinitionsException() {
-    $this->assertNull(CustomFieldsInit::loadDefinitions(''));
-    $this->assertNull(CustomFieldsInit::loadDefinitions(__DIR__ . '/definitions/broken'));
-    $this->assertNull(CustomFieldsInit::loadDefinitions(__DIR__ . '/definitions/doesnotexist'));
-  }
-
-  /**
-   * Test loadDefinitions().
-   */
-  public function testLoadDefinitions() {
-    $cf = CustomFieldsInit::loadDefinitions(__DIR__ . '/definitions');
-    $this->assertInstanceOf(CustomFieldsInit::class, $cf);
   }
 
 }

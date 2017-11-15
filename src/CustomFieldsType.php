@@ -2,6 +2,8 @@
 
 namespace CustomFields;
 
+use CustomFields\Exception\BadDefinitionException;
+
 /**
  * Method for managing configurations.
  */
@@ -10,6 +12,7 @@ class CustomFieldsType {
   protected $definition;
   protected $singularName;
   protected $pluralName;
+  protected $cfs;
 
   /**
    * Constructor.  To be invoked with static::factory().
@@ -20,31 +23,58 @@ class CustomFieldsType {
    *   Plural name of type used within WP.
    * @param array $definition
    *   Definition used to build type.
+   * @param CustomFields $cfs
+   *   CustomFieldsInit container; includes cache and notifier instances.
    */
-  protected function __construct(string $singularName, string $pluralName, array $definition) {
+  protected function __construct(string $singularName, string $pluralName, array $definition, CustomFields $cfs) {
     $this->singularName = $singularName;
     $this->pluralName = $pluralName;
     $this->definition = $definition;
-    return $this;
+    $this->cfs = $cfs;
   }
 
   /**
-   * Factory to create type/fields object from definition arrays.
+   * Factory to create type/fields objects from definitions.
    *
-   * @param array $defArray
+   * @param CustomFields $cfs
    *   Array defining this type.
    *
-   * @return static
+   * @return array
+   *   Array of {static}, one per definition in $cfs, keyed by type name.
    */
-  public static function factory(array $defArray) {
-    $singularName = $defArray['singular_name'];
-    $pluralName = $defArray['plural_name'];
-    unset($defArray['singular_name'], $defArray['plural_name']);
-    // @TODO Check 3 vars above. If bad, return exception.
-    $cfType = new static($singularName, $pluralName, $defArray);
-    // @TODO - only call for non-existing post types - check those first.
-    add_action('init', [$cfType, 'declarePostType']);
-    return $cfType;
+  public static function buildTypes(CustomFields $cfs) {
+    $defs = [];
+    foreach ($cfs->getDefinitions() as $name => $defArray) {
+      try {
+        if (!empty($defArray) && !empty($defArray['singular_name']) && !empty($defArray['plural_name'])) {
+          $singularName = $defArray['singular_name'];
+          $pluralName = $defArray['plural_name'];
+          unset($defArray['singular_name'], $defArray['plural_name']);
+        }
+        else {
+          throw new BadDefinitionException();
+        }
+      }
+      catch (BadDefinitionException $e) {
+        $cfs->getNotifier()->queueAdminNotice(sprintf("<strong>Error defining type “%s”</strong><br /> ", $name) . $e);
+        continue;
+      }
+      try {
+        if (!in_array($singularName, array_keys(get_post_types()))) {
+          $cfType = new static($singularName, $pluralName, $defArray, $cfs);
+          add_action('init', [$cfType, 'declarePostType']);
+          $defs[$name] = $cfType;
+        }
+        else {
+          throw new BadDefinitionException();
+        }
+      }
+      catch (BadDefinitionException $e) {
+        $cfs->getNotifier()->queueAdminNotice(sprintf("<strong>Cannot redefine type “%s”</strong><br /> ", $name) . $e);
+        continue;
+      }
+    }
+    return $defs;
   }
 
   /**
