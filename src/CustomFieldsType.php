@@ -9,9 +9,32 @@ use CustomFields\Exception\BadDefinitionException;
  */
 class CustomFieldsType {
 
-  protected $definition;
+  /**
+   * Machine name of type in singular use.
+   *
+   * @var string
+   */
   protected $singularName;
+
+  /**
+   * Machine name of type in plural use.
+   *
+   * @var string
+   */
+
   protected $pluralName;
+  /**
+   * Type definition declaring WP post type.
+   *
+   * @var array
+   */
+  protected $definition;
+
+  /**
+   * CustomFields object; serves as DI container for cache and notifier.
+   *
+   * @var \CustomFields\CustomFields
+   */
   protected $cfs;
 
   /**
@@ -23,7 +46,7 @@ class CustomFieldsType {
    *   Plural name of type used within WP.
    * @param array $definition
    *   Definition used to build type.
-   * @param CustomFields $cfs
+   * @param \CustomFields\CustomFields $cfs
    *   CustomFields object used as container; includes cache and notifier.
    */
   protected function __construct(string $singularName, string $pluralName, array $definition, CustomFields $cfs) {
@@ -36,13 +59,14 @@ class CustomFieldsType {
   /**
    * Factory to create type/fields objects from definitions.
    *
-   * @param CustomFields $cfs
+   * @param \CustomFields\CustomFields $cfs
    *   Array defining this type.
    *
    * @return array
    *   Array of {static}, one per definition in $cfs, keyed by type name.
    */
   public static function buildTypes(CustomFields $cfs) {
+    // @TODO test if ($cfs->isInitialized()) and throw error if needed.
     $defs = [];
     foreach ($cfs->getDefinitions() as $name => $defArray) {
       try {
@@ -59,20 +83,12 @@ class CustomFieldsType {
         $cfs->getNotifier()->queueAdminNotice(sprintf("<strong>Error defining type “%s”</strong><br /> ", $name) . $e);
         continue;
       }
-      try {
-        if (!in_array($singularName, array_keys(get_post_types()))) {
-          $cfType = new static($singularName, $pluralName, $defArray, $cfs);
-          add_action('init', [$cfType, 'declarePostType']);
-          $defs[$name] = $cfType;
-        }
-        else {
-          throw new BadDefinitionException();
-        }
+      $cfType = new static($singularName, $pluralName, $defArray, $cfs);
+      // Existing post types aren't redeclared but may have added fields etc.
+      if (!in_array($singularName, array_keys(get_post_types()))) {
+        add_action('init', [$cfType, 'declarePostType']);
       }
-      catch (BadDefinitionException $e) {
-        $cfs->getNotifier()->queueAdminNotice(sprintf("<strong>Cannot redefine type “%s”</strong><br /> ", $name) . $e);
-        continue;
-      }
+      $defs[$name] = $cfType;
     }
     return $defs;
   }
@@ -87,16 +103,6 @@ class CustomFieldsType {
     $def = $this->getDefinition();
     register_post_type($name, $def);
     return $this;
-  }
-
-  /**
-   * Get definition of type.
-   *
-   * @return array
-   *   Definition used to build type.
-   */
-  public function getDefinition() {
-    return $this->definition;
   }
 
   /**
@@ -117,6 +123,26 @@ class CustomFieldsType {
    */
   public function getPluralName() {
     return $this->pluralName;
+  }
+
+  /**
+   * Get definition of type.
+   *
+   * @return array
+   *   Definition used to build type.
+   */
+  public function getDefinition() {
+    return $this->definition;
+  }
+
+  /**
+   * Get \CustomFields\CustomFields container.
+   *
+   * @return \CustomFields\CustomFields
+   *   CustomFields container.
+   */
+  public function getCfs() {
+    return $this->cfs;
   }
 
 }

@@ -7,6 +7,7 @@ use CustomFields\Cache\CacheInterface;
 use CustomFields\Cache\WPOptionsCache;
 use CustomFields\Notifier\NotifierInterface;
 use CustomFields\Notifier\WPNotifier;
+use CustomFields\Tests\Notifier\TestNotifier;
 
 /**
  * Tests for CustomFieldInit.
@@ -15,11 +16,14 @@ class CustomFieldsTest extends \WP_UnitTestCase {
 
   /**
    * Test initialize().
+   *
+   * Also tests isInitialized().
    */
   public function testInitialize() {
-    $cf = new CustomFields(new WPOptionsCache(), new WPNotifier());
+    $cf = new CustomFields(new WPOptionsCache(), new TestNotifier());
     $cf->initialize(__DIR__ . '/definitions');
     $this->assertInstanceOf(CustomFields::class, $cf);
+    $this->assertTrue($cf->isInitialized());
   }
 
   /**
@@ -59,7 +63,7 @@ class CustomFieldsTest extends \WP_UnitTestCase {
    * Test getCache.
    */
   public function testGetCache() {
-    $cf = new CustomFields(new WPOptionsCache(), new WPNotifier());
+    $cf = new CustomFields(new WPOptionsCache(), new TestNotifier());
     $cf->initialize(__DIR__ . '/definitions');
     $this->assertInstanceOf(CacheInterface::class, $cf->getCache());
   }
@@ -68,7 +72,7 @@ class CustomFieldsTest extends \WP_UnitTestCase {
    * Test getNotiofier.
    */
   public function testGetNotifier() {
-    $cf = new CustomFields(new WPOptionsCache(), new WPNotifier());
+    $cf = new CustomFields(new WPOptionsCache(), new TestNotifier());
     $cf->initialize(__DIR__ . '/definitions');
     $this->assertInstanceOf(NotifierInterface::class, $cf->getNotifier());
   }
@@ -77,7 +81,7 @@ class CustomFieldsTest extends \WP_UnitTestCase {
    * Test getDefinitions.
    */
   public function testGetDefinitions() {
-    $cf = new CustomFields(new WPOptionsCache(), new WPNotifier());
+    $cf = new CustomFields(new WPOptionsCache(), new TestNotifier());
     $cf->initialize(__DIR__ . '/definitions');
     $expected = [
       'testsample' => [

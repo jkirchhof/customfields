@@ -15,10 +15,33 @@ use Symfony\Component\Yaml\Exception\ParseException;
  */
 class CustomFields {
 
+  /**
+   * Cache object.
+   *
+   * @var \CustomFields\Cache\CacheInterface
+   */
   protected $cache;
+
+  /**
+   * Notifier object.
+   *
+   * @var \CustomFields\Notifier\NotifierInterface
+   */
   protected $notifier;
+
+  /**
+   * Definitions, keyed by WP post type.
+   *
+   * @var array
+   */
   protected $definitions;
-  protected $initalized;
+
+  /**
+   * Initialization state of object (usually unset or TRUE)
+   *
+   * @var bool
+   */
+  protected $initialized;
 
   /**
    * Set some defaults.
@@ -56,7 +79,7 @@ class CustomFields {
    * Get definitions.
    *
    * @return array
-   *   PHP definitions of custom types, fields, etc.
+   *   PHP definitions of custom types, fields, etc., keyed by type.
    */
   public function getDefinitions() {
     return $this->definitions;
@@ -66,10 +89,10 @@ class CustomFields {
    * Check if object is initialized (with type definitions).
    *
    * @return bool
-   *   TRUE when initalized.  FALSE when not.
+   *   TRUE when initialized.  FALSE when not.
    */
   public function isInitialized() {
-    if (!empty($this->initalized)) {
+    if (!empty($this->initialized)) {
       return TRUE;
     }
     return FALSE;
@@ -90,7 +113,7 @@ class CustomFields {
   public function initialize(string $definitionsPath) {
     // @TODO Add option to cache all types.  If found, return it here.
     // @TODO Create admin page to manage cached definitions.
-    if ($this->isInitialized) {
+    if ($this->isInitialized()) {
       return $this;
     }
     try {
@@ -102,7 +125,7 @@ class CustomFields {
       return $this;
     }
     $this->definitions = $this->collectDefinitions($definitionHashes, $definitionDirs);
-    $this->initalized = TRUE;
+    $this->initialized = TRUE;
     return $this;
   }
 
