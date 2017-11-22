@@ -66,14 +66,12 @@ class CustomFieldsType {
    *   Array of {static}, one per definition in $cfs, keyed by type name.
    */
   public static function buildTypes(CustomFields $cfs) {
-    // @TODO test if ($cfs->isInitialized()) and throw error if needed.
     $defs = [];
     foreach ($cfs->getDefinitions() as $name => $defArray) {
       try {
         if (!empty($defArray) && !empty($defArray['singular_name']) && !empty($defArray['plural_name'])) {
           $singularName = $defArray['singular_name'];
           $pluralName = $defArray['plural_name'];
-          unset($defArray['singular_name'], $defArray['plural_name']);
         }
         else {
           throw new BadDefinitionException();
@@ -83,11 +81,17 @@ class CustomFieldsType {
         $cfs->getNotifier()->queueAdminNotice(sprintf("<strong>Error defining type “%s”</strong><br /> ", $name) . $e);
         continue;
       }
-      $cfType = new static($singularName, $pluralName, $defArray, $cfs);
-      // Existing post types aren't redeclared but may have added fields etc.
-      if (!in_array($singularName, array_keys(get_post_types()))) {
-        add_action('init', [$cfType, 'declarePostType']);
+      if (!empty($defArray['wp_definition'])) {
+        $cfType = new static($singularName, $pluralName, $defArray, $cfs);
+        // Existing post types aren't redeclared but may have added fields etc.
+        if (!in_array($singularName, array_keys(get_post_types()))) {
+          add_action('init', [$cfType, 'declarePostType']);
+        }
       }
+      // @TODO:
+      // Replace archive with page.
+      // Add shortcode for [plural_name].
+      // Add columns to list of posts.
       $defs[$name] = $cfType;
     }
     return $defs;

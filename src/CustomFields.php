@@ -4,9 +4,10 @@ namespace CustomFields;
 
 use CustomFields\Cache\CacheInterface;
 use CustomFields\Notifier\NotifierInterface;
-use CustomFields\Exception\NoDefinitionsException;
 use CustomFields\Exception\CacheNullException;
 use CustomFields\Exception\ExceptionInterface;
+use CustomFields\Exception\NoDefinitionsException;
+use CustomFields\Exception\NotInitializedException;
 use Symfony\Component\Yaml\Yaml;
 use Symfony\Component\Yaml\Exception\ParseException;
 
@@ -44,7 +45,7 @@ class CustomFields {
   protected $initialized;
 
   /**
-   * Set some defaults.
+   * Inject cache and nofifier.
    *
    * Do not directly use constructor.  Initalize objects through static call to
    * initialize(). Future versions may re-write the constructor such as by using
@@ -58,7 +59,7 @@ class CustomFields {
   /**
    * Get cache object.
    *
-   * @return CustomFields\Cache\CacheInterface
+   * @return \CustomFields\Cache\CacheInterface
    *   Cache object.
    */
   public function getCache() {
@@ -68,7 +69,7 @@ class CustomFields {
   /**
    * Get notification object.
    *
-   * @return CustomFields\Notifier\NotifierInterface
+   * @return \CustomFields\Notifier\NotifierInterface
    *   Admin notification object.
    */
   public function getNotifier() {
@@ -80,8 +81,14 @@ class CustomFields {
    *
    * @return array
    *   PHP definitions of custom types, fields, etc., keyed by type.
+   *
+   * @throws \CustomFields\Exception\NotInitializedException
+   *   Thrown if no instance is not initialized.
    */
   public function getDefinitions() {
+    if (!$this->isInitialized()) {
+      throw new NotInitializedException();
+    }
     return $this->definitions;
   }
 

@@ -87,21 +87,33 @@ class CustomFieldsTest extends \WP_UnitTestCase {
       'testsample' => [
         'singular_name' => 'testsample',
         'plural_name' => 'testsamples',
-        'labels' => [
-          'name' => 'Sample',
-          'singular_name' => 'Sample',
-          'add_new_item' => 'Add New Sample',
-          'edit_item' => 'Edit Sample',
-          'new_item' => 'New Sample',
-          'view_item' => 'View Sample',
+        'wp_definition' => [
+          'labels' => [
+            'name' => 'Sample',
+            'singular_name' => 'Sample',
+            'add_new_item' => 'Add New Sample',
+            'edit_item' => 'Edit Sample',
+            'new_item' => 'New Sample',
+            'view_item' => 'View Sample',
+          ],
+          'public' => TRUE,
+          'exclude_from_search' => FALSE,
+          'hierarchical' => TRUE,
         ],
-        'public' => TRUE,
-        'exclude_from_search' => FALSE,
-        'hierarchical' => TRUE,
       ],
     ];
     $result = $cf->getDefinitions();
     $this->assertEquals($result, $expected);
+  }
+
+  /**
+   * Test getDefinitions() with uninitialized CustomFields object.
+   *
+   * @expectedException \CustomFields\Exception\NotInitializedException
+   */
+  public function testGetDefinitionsNotInitialized() {
+    $cf = new CustomFields(new WPOptionsCache(), new TestNotifier());
+    $cf->getDefinitions();
   }
 
 }

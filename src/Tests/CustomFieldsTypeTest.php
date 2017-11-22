@@ -25,6 +25,20 @@ class CustomFieldsTypeTest extends \WP_UnitTestCase {
   }
 
   /**
+   * Test buildTypes() with uninitialized CustomFields object.
+   *
+   * The specific exception expected is thrown from CustomFields, but the test
+   * for interface here ensures something is thown.  CustomFieldsType may do
+   * additional handling but should still throw something.
+   *
+   * @expectedException \CustomFields\Exception\ExceptionInterface
+   */
+  public function testBuildTypesCustomFieldsNotInitialized() {
+    $cf = new CustomFields(new WPOptionsCache(), new TestNotifier());
+    $result = CustomFieldsType::buildTypes($cf);
+  }
+
+  /**
    * Test that post type exists.
    */
   public function testDeclarePostType() {
@@ -59,7 +73,7 @@ class CustomFieldsTypeTest extends \WP_UnitTestCase {
   public function testGetDefinition() {
     $cf = new CustomFields(new WPOptionsCache(), new TestNotifier());
     $cf->initialize(__DIR__ . '/definitions');
-    $result = CustomFieldsType::buildTypes($cf)['testsample']->getDefinition();
+    $result = CustomFieldsType::buildTypes($cf)['testsample']->getDefinition()['wp_definition'];
     $expected = [
       'labels' => [
         'name' => 'Sample',
