@@ -45,6 +45,16 @@ class CustomFields {
   protected $initialized;
 
   /**
+   * Global WP query object.
+   *
+   * Referenced for the entirely cosmetic reason that "global" only needs to be
+   * used once, in the constructor below, instead of all over this project.
+   *
+   * @var \WP_Query
+   */
+  public $wpQuery;
+
+  /**
    * Inject cache and nofifier.
    *
    * Do not directly use constructor.  Initalize objects through static call to
@@ -52,8 +62,10 @@ class CustomFields {
    * a configuration file to set cache and notifier services.
    */
   public function __construct(CacheInterface $cache, NotifierInterface $notifier) {
+    global $wp_query;
     $this->cache = $cache;
     $this->notifier = $notifier;
+    $this->wpQuery = &$wp_query;
   }
 
   /**
