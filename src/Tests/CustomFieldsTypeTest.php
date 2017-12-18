@@ -46,6 +46,31 @@ class CustomFieldsTypeTest extends \WP_UnitTestCase {
   }
 
   /**
+   * Test that shortcode callback is found.
+   */
+  public function testCreateShortcode() {
+    $cf = new CustomFields(new WPOptionsCache(), new TestNotifier());
+    $cf->initialize(__DIR__ . '/definitions');
+    CustomFieldsType::buildTypes($cf);
+    $result = do_shortcode("[samples]");
+    $this->assertEquals($result, "Shortcode processed successfully.");
+  }
+
+  /**
+   * Test notification for missing shortcode callback.
+   *
+   * @expectedException \CustomFields\Tests\Exception\TestException
+   */
+  public function testCreateShortcodeMissingCallback() {
+    $this->expectExceptionMessage('<strong>Error defining shortcode for type ' .
+      '“missingshortcode”</strong><br />Shortcodes will not be processed as ' .
+      'expected and will likely be visible as raw text inside of posts.');
+    $cf = new CustomFields(new WPOptionsCache(), new TestNotifier());
+    $cf->initialize(__DIR__ . '/baddefinitions1');
+    CustomFieldsType::buildTypes($cf);
+  }
+
+  /**
    * Test getSingularName().
    */
   public function testGetSingularName() {

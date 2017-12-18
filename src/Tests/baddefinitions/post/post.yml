@@ -10,3 +10,4 @@ labels:
 public: true
 exclude_from_search: false
 hierarchical: true
+create_shortcode: true

@@ -236,6 +236,9 @@ class CustomFields {
       $this->getNotifier()->queueAdminNotice($notice);
       return NULL;
     }
+    if (file_exists($path . '/' . $type . '.php')) {
+      include $path . '/' . $type . '.php';
+    }
     return $definition;
   }
 

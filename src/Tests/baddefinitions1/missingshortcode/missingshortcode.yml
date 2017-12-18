@@ -1,10 +1,9 @@
-singular_name: sample
-plural_name: samples
-
+singular_name: missingshortcode
+plural_name: missingshortcodes
 wp_definition:
   labels:
-    name: Sample
-    singular_name: Sample
+    name: Missingshortcode
+    singular_name: Missingshortcode
     add_new_item: Add New Sample
     edit_item: Edit Sample
     new_item: New Sample
@@ -12,6 +11,4 @@ wp_definition:
   public: true
   exclude_from_search: false
   hierarchical: true
-
-replace_archive_with_page: true
 create_shortcode: true
