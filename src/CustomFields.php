@@ -226,15 +226,16 @@ class CustomFields {
    */
   protected function parseDefinition(string $path, string $type) {
     try {
-      $definition = Yaml::parse(file_get_contents($path . '/' . $type . '.yml'), Yaml::PARSE_EXCEPTION_ON_INVALID_TYPE);
+      $definition = Yaml::parse(file_get_contents($path . '/' . $type . '.yml'),
+        Yaml::PARSE_EXCEPTION_ON_INVALID_TYPE);
       // @TODO parse other parts of definition.
     }
     catch (ParseException $e) {
+      $definition = NULL;
       $notice = sprintf("The CustomFields definition for “%s” could not be " .
        "parsed. It will be ignored, which may cause other errors. The parser " .
        "returned:<br /><pre>%s</pre>", $type, $e);
       $this->getNotifier()->queueAdminNotice($notice);
-      return NULL;
     }
     if (file_exists($path . '/' . $type . '.php')) {
       include $path . '/' . $type . '.php';

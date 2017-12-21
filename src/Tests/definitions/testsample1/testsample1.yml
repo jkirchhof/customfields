@@ -1,0 +1,13 @@
+singular_name: testsample1
+plural_name: testsample1s
+wp_definition:
+  labels:
+    name: testsample1
+    singular_name: Sample1
+    add_new_item: Add New Sample1
+    edit_item: Edit Sample1
+    new_item: New Sample1
+    view_item: View Sample1
+  public: true
+  exclude_from_search: false
+  hierarchical: true

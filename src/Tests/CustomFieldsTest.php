@@ -21,7 +21,16 @@ class CustomFieldsTest extends \WP_UnitTestCase {
    */
   public function testInitialize() {
     $cf = new CustomFields(new WPOptionsCache(), new TestNotifier());
+    $this->assertFalse($cf->isInitialized());
     $cf->initialize(__DIR__ . '/definitions');
+    $this->assertInstanceOf(CustomFields::class, $cf);
+    $this->assertTrue($cf->isInitialized());
+    // Re-initialization returns correct object.
+    $cf->initialize(__DIR__ . '/definitions');
+    $this->assertInstanceOf(CustomFields::class, $cf);
+    $this->assertTrue($cf->isInitialized());
+    // Re-initialization returns original object.
+    $cf->initialize('foobarfoobar');
     $this->assertInstanceOf(CustomFields::class, $cf);
     $this->assertTrue($cf->isInitialized());
   }
@@ -44,7 +53,20 @@ class CustomFieldsTest extends \WP_UnitTestCase {
    */
   public function testNoDefinitionsExceptionBrokenDef() {
     $cf = new CustomFields(new WPOptionsCache(), new WPNotifier());
-    $cf->initialize(__DIR__ . '/definitions/broken');
+    $cf->initialize(__DIR__ . '/definitions-broken');
+    $this->assertFalse($cf->isInitialized());
+  }
+
+  /**
+   * No return when definition parsing fails. Exceptions are properly handled.
+   *
+   * Definition YAML can't be read.
+   */
+  public function testNoDefinitionsExceptionBrokenDefBadYaml() {
+    $this->expectExceptionMessage("could not be parsed. It will be ignored, " .
+      "which may cause other errors. The parser returned");
+    $cf = new CustomFields(new WPOptionsCache(), new TestNotifier());
+    $cf->initialize(__DIR__ . '/definitions-badyaml');
     $this->assertFalse($cf->isInitialized());
   }
 
@@ -101,9 +123,26 @@ class CustomFieldsTest extends \WP_UnitTestCase {
           'hierarchical' => TRUE,
         ],
       ],
+      'testsample1' => [
+        'singular_name' => 'testsample1',
+        'plural_name' => 'testsample1s',
+        'wp_definition' => [
+          'labels' => [
+            'name' => 'testsample1',
+            'singular_name' => 'Sample1',
+            'add_new_item' => 'Add New Sample1',
+            'edit_item' => 'Edit Sample1',
+            'new_item' => 'New Sample1',
+            'view_item' => 'View Sample1',
+          ],
+          'public' => TRUE,
+          'exclude_from_search' => FALSE,
+          'hierarchical' => TRUE,
+        ],
+      ],
     ];
     $result = $cf->getDefinitions();
-    $this->assertEquals($result, $expected);
+    $this->assertEquals($expected, $result);
   }
 
   /**

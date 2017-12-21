@@ -60,7 +60,11 @@ class WPOptionsCache implements CacheInterface {
       return TRUE;
     }
     else {
+      // @codeCoverageIgnoreStart
+      // WP doesn't allow a DB mock that's broken for testing cases when
+      // update_option() fails.
       throw new CacheSaveFailureException();
+      // @codeCoverageIgnoreEnd
     }
   }
 

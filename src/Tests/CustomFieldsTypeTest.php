@@ -53,7 +53,7 @@ class CustomFieldsTypeTest extends \WP_UnitTestCase {
     $cf->initialize(__DIR__ . '/definitions');
     CustomFieldsType::buildTypes($cf);
     $result = do_shortcode("[samples]");
-    $this->assertEquals($result, "Shortcode processed successfully.");
+    $this->assertEquals("Shortcode processed successfully.", $result);
   }
 
   /**
@@ -66,7 +66,7 @@ class CustomFieldsTypeTest extends \WP_UnitTestCase {
       '“missingshortcode”</strong><br />Shortcodes will not be processed as ' .
       'expected and will likely be visible as raw text inside of posts.');
     $cf = new CustomFields(new WPOptionsCache(), new TestNotifier());
-    $cf->initialize(__DIR__ . '/baddefinitions1');
+    $cf->initialize(__DIR__ . '/definitions-missingshortcode');
     CustomFieldsType::buildTypes($cf);
   }
 
@@ -78,7 +78,7 @@ class CustomFieldsTypeTest extends \WP_UnitTestCase {
     $cf->initialize(__DIR__ . '/definitions');
     $result = CustomFieldsType::buildTypes($cf)['testsample']->getSingularName();
     $expected = 'testsample';
-    $this->assertEquals($result, $expected);
+    $this->assertEquals($expected, $result);
   }
 
   /**
@@ -89,7 +89,7 @@ class CustomFieldsTypeTest extends \WP_UnitTestCase {
     $cf->initialize(__DIR__ . '/definitions');
     $result = CustomFieldsType::buildTypes($cf)['testsample']->getPluralName();
     $expected = 'testsamples';
-    $this->assertEquals($result, $expected);
+    $this->assertEquals($expected, $result);
   }
 
   /**
@@ -112,7 +112,7 @@ class CustomFieldsTypeTest extends \WP_UnitTestCase {
       'exclude_from_search' => FALSE,
       'hierarchical' => TRUE,
     ];
-    $this->assertEquals($result, $expected);
+    $this->assertEquals($expected, $result);
   }
 
   /**

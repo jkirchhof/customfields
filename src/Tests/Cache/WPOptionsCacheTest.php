@@ -19,7 +19,7 @@ class WPOptionsCacheTest extends \WP_UnitTestCase {
     delete_option(WPOptionsCache::CACHE_PREFIX . $key);
     update_option(WPOptionsCache::CACHE_PREFIX . $key, $value);
     $result = $wpoc->get($key);
-    $this->assertEquals($result, $value);
+    $this->assertEquals($value, $result);
     if (!delete_option(WPOptionsCache::CACHE_PREFIX . $key)) {
       throw new \RuntimeException("WPOptionsCacheTest::testGet() left value in database");
     };
@@ -63,7 +63,7 @@ class WPOptionsCacheTest extends \WP_UnitTestCase {
     $cacheSetA = $wpoc->set($key, $valueA);
     $this->assertTrue($cacheSetA);
     $resultA = get_option(WPOptionsCache::CACHE_PREFIX . $key);
-    $this->assertEquals($resultA, $valueA);
+    $this->assertEquals($valueA, $resultA);
     if (!delete_option(WPOptionsCache::CACHE_PREFIX . $key)) {
       throw new \RuntimeException("WPOptionsCacheTest::testSet() left value in database");
     };
