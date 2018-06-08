@@ -1,0 +1,26 @@
+singular_name: person
+plural_name: people
+
+wp_definition:
+  labels:
+    name: Person
+    singular_name: Person
+    add_new_item: Add New Person
+    edit_item: Edit Person
+    new_item: New Person
+    view_item: View Person
+  public: true
+  exclude_from_search: false
+  hierarchical: true
+
+replace_archive_with_page: true
+create_shortcode: true
+add_columns:
+  person_role:
+    header: Role
+  person_dept:
+    header: Department
+  person_dates:
+    header: Dates Active
+    data: __custom
+    sort: person_is_gone

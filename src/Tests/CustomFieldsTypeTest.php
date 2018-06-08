@@ -25,6 +25,29 @@ class CustomFieldsTypeTest extends \WP_UnitTestCase {
   }
 
   /**
+   * Test buildTypes() with complex definitions.
+   */
+  public function testBuildTypesComplex() {
+    $cf = new CustomFields(new WPOptionsCache(), new TestNotifier());
+    $cf->initialize(__DIR__ . '/definitions-person');
+    $result = CustomFieldsType::buildTypes($cf);
+    foreach ($result as $r) {
+      $this->assertInstanceOf(CustomFieldsType::class, $r);
+    }
+  }
+
+  /**
+   * Test buildTypes().
+   */
+  public function testBuildTypesBadDefinition() {
+    $this->expectExceptionMessage('<strong>Error defining type ' .
+      '“missingname”</strong><br />');
+    $cf = new CustomFields(new WPOptionsCache(), new TestNotifier());
+    $cf->initialize(__DIR__ . '/definitions-missingname');
+    $result = CustomFieldsType::buildTypes($cf);
+  }
+
+  /**
    * Test buildTypes() with uninitialized CustomFields object.
    *
    * The specific exception expected is thrown from CustomFields, but the test
@@ -42,6 +65,10 @@ class CustomFieldsTypeTest extends \WP_UnitTestCase {
    * Test that post type exists.
    */
   public function testDeclarePostType() {
+    $cf = new CustomFields(new WPOptionsCache(), new TestNotifier());
+    $cf->initialize(__DIR__ . '/definitions');
+    CustomFieldsType::buildTypes($cf);
+    do_action('init');
     $this->assertTrue(array_key_exists('sample', get_post_types()));
   }
 

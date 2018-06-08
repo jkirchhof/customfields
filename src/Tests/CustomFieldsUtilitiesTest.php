@@ -22,7 +22,7 @@ class CustomFieldsUtilitiesTest extends \WP_UnitTestCase {
    */
   public function testHashDirectoryWithSubdirectory() {
     $result = CustomFieldsUtilities::hashDirectory(__DIR__ . '/definitions-badyaml');
-    $this->assertEquals('c0571b4e151df87712ff0de8e0d1339278ce225f', $result);
+    $this->assertEquals('67ee601149dadb1231527baa651af9368ad259e6', $result);
   }
 
   /**

@@ -1,4 +1,5 @@
-{
-  "this is JSON": true,
-  "it's not YAML": true
-}
+- this is: broken
+- yaml:
+  - [this array]
+    - {and this object}
+  - don't work together

@@ -14,7 +14,7 @@ class BadDefinitionExceptionTest extends \WP_UnitTestCase {
    */
   public function testNoDefinitionsException() {
     $exception = new BadDefinitionException();
-    $message = 'This definition could be parsed. This is like to cause unexpected behavior, including additional errors.';
+    $message = 'This definition could be parsed. This is likely to cause unexpected behavior, including additional errors.';
     $this->assertEquals($message, '' . $exception);
   }
 
