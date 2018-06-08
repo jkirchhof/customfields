@@ -171,9 +171,13 @@ class CustomFields {
     while (($defName = $dir->read()) !== FALSE) {
       if ($defName[0] != '.' && is_dir($definitionsPath . '/' . $defName)) {
         $defDir = $definitionsPath . '/' . $defName;
-        $defPath = $defDir . '/' . $defName . '.yml';
-        if (file_exists($defPath)) {
+        $ymlPath = $defDir . '/' . $defName . '.yml';
+        $phpPath = $defDir . '/' . $defName . '.php';
+        if (file_exists($ymlPath)) {
           $definitions[$defName] = $defDir;
+          if (file_exists($phpPath)) {
+            include $phpPath;
+          }
         }
       }
     };
@@ -228,7 +232,6 @@ class CustomFields {
     try {
       $definition = Yaml::parse(file_get_contents($path . '/' . $type . '.yml'),
         Yaml::PARSE_EXCEPTION_ON_INVALID_TYPE);
-      // @TODO parse other parts of definition.
     }
     catch (ParseException $e) {
       $definition = NULL;
@@ -236,9 +239,6 @@ class CustomFields {
        "parsed. It will be ignored, which may cause other errors. The parser " .
        "returned:<br /><pre>%s</pre>", $type, $e);
       $this->getNotifier()->queueAdminNotice($notice);
-    }
-    if (file_exists($path . '/' . $type . '.php')) {
-      include $path . '/' . $type . '.php';
     }
     return $definition;
   }
