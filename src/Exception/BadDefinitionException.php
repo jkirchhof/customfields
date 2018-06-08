@@ -12,7 +12,7 @@ class BadDefinitionException extends RuntimeException {
    *
    * @var string
    */
-  protected $message = 'This definition could be parsed. This is like to cause unexpected behavior, including additional errors.';
+  protected $message = 'This definition could be parsed. This is likely to cause unexpected behavior, including additional errors.';
 
   /**
    * String output of exception.
