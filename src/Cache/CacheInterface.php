@@ -3,7 +3,7 @@
 namespace CustomFields\Cache;
 
 /**
- * Exception interface for all exceptions thrown by CustomFields.
+ * Interface for caching used by CustomFields.
  */
 interface CacheInterface {
 

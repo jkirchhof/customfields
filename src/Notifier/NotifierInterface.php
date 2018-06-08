@@ -3,7 +3,7 @@
 namespace CustomFields\Notifier;
 
 /**
- * Exception interface for all exceptions thrown by CustomFields.
+ * Interface for user notices displayed by CustomFields.
  */
 interface NotifierInterface {
 
