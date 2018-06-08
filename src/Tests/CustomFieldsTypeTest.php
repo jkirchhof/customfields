@@ -5,6 +5,7 @@ namespace CustomFields\Tests;
 use CustomFields\CustomFields;
 use CustomFields\CustomFieldsType;
 use CustomFields\Cache\WPOptionsCache;
+use CustomFields\Storage\WPMetaData;
 use CustomFields\Tests\Notifier\TestNotifier;
 
 /**
@@ -16,7 +17,7 @@ class CustomFieldsTypeTest extends \WP_UnitTestCase {
    * Test buildTypes().
    */
   public function testBuildTypes() {
-    $cf = new CustomFields(new WPOptionsCache(), new TestNotifier());
+    $cf = new CustomFields(new WPOptionsCache(), new TestNotifier(), new WPMetaData());
     $cf->initialize(__DIR__ . '/definitions');
     $result = CustomFieldsType::buildTypes($cf);
     foreach ($result as $r) {
@@ -28,7 +29,7 @@ class CustomFieldsTypeTest extends \WP_UnitTestCase {
    * Test buildTypes() with complex definitions.
    */
   public function testBuildTypesComplex() {
-    $cf = new CustomFields(new WPOptionsCache(), new TestNotifier());
+    $cf = new CustomFields(new WPOptionsCache(), new TestNotifier(), new WPMetaData());
     $cf->initialize(__DIR__ . '/definitions-person');
     $result = CustomFieldsType::buildTypes($cf);
     foreach ($result as $r) {
@@ -42,7 +43,7 @@ class CustomFieldsTypeTest extends \WP_UnitTestCase {
   public function testBuildTypesBadDefinition() {
     $this->expectExceptionMessage('<strong>Error defining type ' .
       '“missingname”</strong><br />');
-    $cf = new CustomFields(new WPOptionsCache(), new TestNotifier());
+    $cf = new CustomFields(new WPOptionsCache(), new TestNotifier(), new WPMetaData());
     $cf->initialize(__DIR__ . '/definitions-missingname');
     $result = CustomFieldsType::buildTypes($cf);
   }
@@ -57,7 +58,7 @@ class CustomFieldsTypeTest extends \WP_UnitTestCase {
    * @expectedException \CustomFields\Exception\ExceptionInterface
    */
   public function testBuildTypesCustomFieldsNotInitialized() {
-    $cf = new CustomFields(new WPOptionsCache(), new TestNotifier());
+    $cf = new CustomFields(new WPOptionsCache(), new TestNotifier(), new WPMetaData());
     $result = CustomFieldsType::buildTypes($cf);
   }
 
@@ -65,7 +66,7 @@ class CustomFieldsTypeTest extends \WP_UnitTestCase {
    * Test that post type exists.
    */
   public function testDeclarePostType() {
-    $cf = new CustomFields(new WPOptionsCache(), new TestNotifier());
+    $cf = new CustomFields(new WPOptionsCache(), new TestNotifier(), new WPMetaData());
     $cf->initialize(__DIR__ . '/definitions');
     CustomFieldsType::buildTypes($cf);
     do_action('init');
@@ -76,7 +77,7 @@ class CustomFieldsTypeTest extends \WP_UnitTestCase {
    * Test that shortcode callback is found.
    */
   public function testCreateShortcode() {
-    $cf = new CustomFields(new WPOptionsCache(), new TestNotifier());
+    $cf = new CustomFields(new WPOptionsCache(), new TestNotifier(), new WPMetaData());
     $cf->initialize(__DIR__ . '/definitions');
     CustomFieldsType::buildTypes($cf);
     $result = do_shortcode("[samples]");
@@ -92,7 +93,7 @@ class CustomFieldsTypeTest extends \WP_UnitTestCase {
     $this->expectExceptionMessage('<strong>Error defining shortcode for type ' .
       '“missingshortcode”</strong><br />Shortcodes will not be processed as ' .
       'expected and will likely be visible as raw text inside of posts.');
-    $cf = new CustomFields(new WPOptionsCache(), new TestNotifier());
+    $cf = new CustomFields(new WPOptionsCache(), new TestNotifier(), new WPMetaData());
     $cf->initialize(__DIR__ . '/definitions-missingshortcode');
     CustomFieldsType::buildTypes($cf);
   }
@@ -101,7 +102,7 @@ class CustomFieldsTypeTest extends \WP_UnitTestCase {
    * Test getSingularName().
    */
   public function testGetSingularName() {
-    $cf = new CustomFields(new WPOptionsCache(), new TestNotifier());
+    $cf = new CustomFields(new WPOptionsCache(), new TestNotifier(), new WPMetaData());
     $cf->initialize(__DIR__ . '/definitions');
     $result = CustomFieldsType::buildTypes($cf)['testsample']->getSingularName();
     $expected = 'testsample';
@@ -112,7 +113,7 @@ class CustomFieldsTypeTest extends \WP_UnitTestCase {
    * Test getPluralName().
    */
   public function testGetPluralName() {
-    $cf = new CustomFields(new WPOptionsCache(), new TestNotifier());
+    $cf = new CustomFields(new WPOptionsCache(), new TestNotifier(), new WPMetaData());
     $cf->initialize(__DIR__ . '/definitions');
     $result = CustomFieldsType::buildTypes($cf)['testsample']->getPluralName();
     $expected = 'testsamples';
@@ -123,7 +124,7 @@ class CustomFieldsTypeTest extends \WP_UnitTestCase {
    * Test getDefinition().
    */
   public function testGetDefinition() {
-    $cf = new CustomFields(new WPOptionsCache(), new TestNotifier());
+    $cf = new CustomFields(new WPOptionsCache(), new TestNotifier(), new WPMetaData());
     $cf->initialize(__DIR__ . '/definitions');
     $result = CustomFieldsType::buildTypes($cf)['testsample']->getDefinition()['wp_definition'];
     $expected = [
@@ -146,7 +147,7 @@ class CustomFieldsTypeTest extends \WP_UnitTestCase {
    * Test getCfs().
    */
   public function testGetCfs() {
-    $cf = new CustomFields(new WPOptionsCache(), new TestNotifier());
+    $cf = new CustomFields(new WPOptionsCache(), new TestNotifier(), new WPMetaData());
     $cf->initialize(__DIR__ . '/definitions');
     $result = CustomFieldsType::buildTypes($cf)['testsample']->getCfs();
     $this->assertInstanceOf(CustomFields::class, $result);

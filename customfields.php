@@ -15,9 +15,10 @@ namespace CustomFields;
 
 use CustomFields\Cache\WPOptionsCache;
 use CustomFields\Notifier\WPNotifier;
+use CustomFields\Storage\WPMetaData;
 
 require_once __DIR__ . '/vendor/autoload.php';
 
-$cfs = new CustomFields(new WPOptionsCache(), new WPNotifier());
+$cfs = new CustomFields(new WPOptionsCache(), new WPNotifier(), new WPMetaData());
 $cfs->initialize(__DIR__ . '/definitions');
 $cfTypes = CustomFieldsType::buildTypes($cfs);

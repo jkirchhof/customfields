@@ -7,6 +7,7 @@ use CustomFields\Cache\CacheInterface;
 use CustomFields\Cache\WPOptionsCache;
 use CustomFields\Notifier\NotifierInterface;
 use CustomFields\Notifier\WPNotifier;
+use CustomFields\Storage\WPMetaData;
 use CustomFields\Tests\Notifier\TestNotifier;
 
 /**
@@ -20,7 +21,7 @@ class CustomFieldsTest extends \WP_UnitTestCase {
    * Also tests isInitialized().
    */
   public function testInitialize() {
-    $cf = new CustomFields(new WPOptionsCache(), new TestNotifier());
+    $cf = new CustomFields(new WPOptionsCache(), new TestNotifier(), new WPMetaData());
     $this->assertFalse($cf->isInitialized());
     $cf->initialize(__DIR__ . '/definitions');
     $this->assertInstanceOf(CustomFields::class, $cf);
@@ -41,7 +42,7 @@ class CustomFieldsTest extends \WP_UnitTestCase {
    * Empty path to definiton.
    */
   public function testNoDefinitionsExceptionEmptyDef() {
-    $cf = new CustomFields(new WPOptionsCache(), new WPNotifier());
+    $cf = new CustomFields(new WPOptionsCache(), new WPNotifier(), new WPMetaData());
     $cf->initialize('');
     $this->assertFalse($cf->isInitialized());
   }
@@ -52,7 +53,7 @@ class CustomFieldsTest extends \WP_UnitTestCase {
    * Definition signature is bad.
    */
   public function testNoDefinitionsExceptionBrokenDef() {
-    $cf = new CustomFields(new WPOptionsCache(), new WPNotifier());
+    $cf = new CustomFields(new WPOptionsCache(), new WPNotifier(), new WPMetaData());
     $cf->initialize(__DIR__ . '/definitions-broken');
     $this->assertFalse($cf->isInitialized());
   }
@@ -65,7 +66,7 @@ class CustomFieldsTest extends \WP_UnitTestCase {
   public function testNoDefinitionsExceptionBrokenDefBadYaml() {
     $this->expectExceptionMessage("could not be parsed. It will be ignored, " .
       "which may cause other errors. The parser returned");
-    $cf = new CustomFields(new WPOptionsCache(), new TestNotifier());
+    $cf = new CustomFields(new WPOptionsCache(), new TestNotifier(), new WPMetaData());
     $cf->initialize(__DIR__ . '/definitions-badyaml');
     $this->assertFalse($cf->isInitialized());
   }
@@ -76,7 +77,7 @@ class CustomFieldsTest extends \WP_UnitTestCase {
    * Path does not resolve.
    */
   public function testNoDefinitionsExceptionBadPath() {
-    $cf = new CustomFields(new WPOptionsCache(), new WPNotifier());
+    $cf = new CustomFields(new WPOptionsCache(), new WPNotifier(), new WPMetaData());
     $cf->initialize(__DIR__ . '/definitions/doesnotexist');
     $this->assertFalse($cf->isInitialized());
   }
@@ -85,7 +86,7 @@ class CustomFieldsTest extends \WP_UnitTestCase {
    * Test getCache.
    */
   public function testGetCache() {
-    $cf = new CustomFields(new WPOptionsCache(), new TestNotifier());
+    $cf = new CustomFields(new WPOptionsCache(), new TestNotifier(), new WPMetaData());
     $cf->initialize(__DIR__ . '/definitions');
     $this->assertInstanceOf(CacheInterface::class, $cf->getCache());
   }
@@ -94,7 +95,7 @@ class CustomFieldsTest extends \WP_UnitTestCase {
    * Test getNotiofier.
    */
   public function testGetNotifier() {
-    $cf = new CustomFields(new WPOptionsCache(), new TestNotifier());
+    $cf = new CustomFields(new WPOptionsCache(), new TestNotifier(), new WPMetaData());
     $cf->initialize(__DIR__ . '/definitions');
     $this->assertInstanceOf(NotifierInterface::class, $cf->getNotifier());
   }
@@ -103,7 +104,7 @@ class CustomFieldsTest extends \WP_UnitTestCase {
    * Test getDefinitions.
    */
   public function testGetDefinitions() {
-    $cf = new CustomFields(new WPOptionsCache(), new TestNotifier());
+    $cf = new CustomFields(new WPOptionsCache(), new TestNotifier(), new WPMetaData());
     $cf->initialize(__DIR__ . '/definitions');
     $expected = [
       'testsample' => [
@@ -151,7 +152,7 @@ class CustomFieldsTest extends \WP_UnitTestCase {
    * @expectedException \CustomFields\Exception\NotInitializedException
    */
   public function testGetDefinitionsNotInitialized() {
-    $cf = new CustomFields(new WPOptionsCache(), new TestNotifier());
+    $cf = new CustomFields(new WPOptionsCache(), new TestNotifier(), new WPMetaData());
     $cf->getDefinitions();
   }
 
