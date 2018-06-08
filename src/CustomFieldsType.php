@@ -206,6 +206,10 @@ class CustomFieldsType {
   /**
    * Redirect requests for type archive to page that replaces it.
    *
+   * Attempts to load templates from definition, using page.php as a default.
+   * If none is found, falls back to original template type. Does not throw an
+   * error or give a warning when this happens.
+   *
    * @var string $template
    *   Path to theme template calculated by WP, such as the Archive template.
    *
@@ -218,9 +222,15 @@ class CustomFieldsType {
         'pagename' => $this->getPluralName(),
         'post_parent' => 0,
       ]);
-      $template = locate_template(['page.php']);
+      if (is_array($this->definition['replace_archive_with_page'])) {
+        $preferredTemplates = $this->definition['replace_archive_with_page'];
+      }
+      else {
+        $preferredTemplates = ['page.php'];
+      }
+      $newTemplate = locate_template($preferredTemplates);
     }
-    return $template;
+    return $newTemplate ?: $template;
   }
 
   /**
