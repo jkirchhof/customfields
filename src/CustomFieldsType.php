@@ -38,7 +38,7 @@ class CustomFieldsType {
   protected $cfs;
 
   /**
-   * Constructor.  To be invoked with static::factory().
+   * Constructor.  To be invoked by factory method static::buildTypes().
    *
    * @param string $singularName
    *   Singular name of type used within WP.
@@ -54,6 +54,67 @@ class CustomFieldsType {
     $this->pluralName = $pluralName;
     $this->definition = $definition;
     $this->cfs = $cfs;
+    // Existing post types aren't redeclared.
+    if (!in_array($singularName, array_keys(get_post_types()))) {
+      add_action('init', [$this, 'declarePostType']);
+    }
+
+    /* @TODO
+     * Build fields.
+     * Build metaboxes.
+     * Determine used fields.
+     * See details in "custom boxes plan.txt".
+     */
+
+    if (!empty($definition['replace_archive_with_page'])) {
+      $this->replaceArchiveWithPage();
+    }
+    if (!empty($definition['create_shortcode'])) {
+      $this->createShortcode();
+    }
+    if (!empty($definition['add_columns'])) {
+      $this->addColumnsToAdmin();
+    }
+  }
+
+  /**
+   * Get (machine) signular name.
+   *
+   * @return string
+   *   Singular name of type used within WP.
+   */
+  public function getSingularName() {
+    return $this->singularName;
+  }
+
+  /**
+   * Get (machine) plural name.
+   *
+   * @return string
+   *   Plural name of type used within WP.
+   */
+  public function getPluralName() {
+    return $this->pluralName;
+  }
+
+  /**
+   * Get definition of type.
+   *
+   * @return array
+   *   Definition used to build type.
+   */
+  public function getDefinition() {
+    return $this->definition;
+  }
+
+  /**
+   * Get \CustomFields\CustomFields container.
+   *
+   * @return \CustomFields\CustomFields
+   *   CustomFields container.
+   */
+  public function getCfs() {
+    return $this->cfs;
   }
 
   /**
@@ -79,41 +140,27 @@ class CustomFieldsType {
         }
       }
       catch (BadDefinitionException $e) {
+        unset($defArray);
         $message = sprintf("<strong>Error defining type “%s”</strong><br /> ",
           $name) . $e;
         $cfs
           ->getNotifier()
           ->queueAdminNotice($message);
-        continue;
       }
-      if (!empty($defArray['wp_definition'])) {
-        $cfType = new static($singularName, $pluralName, $defArray, $cfs);
-        // Existing post types aren't redeclared but may have added fields etc.
-        if (!in_array($singularName, array_keys(get_post_types()))) {
-          add_action('init', [$cfType, 'declarePostType']);
-        }
+      if (!empty($defArray) && !empty($defArray['wp_definition'])) {
+        $defs[$name] = new static($singularName, $pluralName, $defArray, $cfs);
       }
-      if (!empty($defArray['replace_archive_with_page'])) {
-        $cfType->replaceArchiveWithPage();
-      }
-      if (!empty($defArray['create_shortcode'])) {
-        $cfType->createShortcode();
-      }
-      $defs[$name] = $cfType;
     }
     return $defs;
   }
 
   /**
    * Callback for 'init' action to register this type with WP.
-   *
-   * @return static
    */
   public function declarePostType() {
     $name = $this->getSingularName();
     $def = $this->getDefinition()['wp_definition'];
     register_post_type($name, $def);
-    return $this;
   }
 
   /**
@@ -171,7 +218,7 @@ class CustomFieldsType {
         'pagename' => $this->getPluralName(),
         'post_parent' => 0,
       ]);
-      $template = locate_template(array('page.php'));
+      $template = locate_template(['page.php']);
     }
     return $template;
   }
@@ -223,43 +270,15 @@ class CustomFieldsType {
   }
 
   /**
-   * Get (machine) signular name.
-   *
-   * @return string
-   *   Singular name of type used within WP.
+   * Declare hooks to add columns to admin view, set up sorting, etc.
    */
-  public function getSingularName() {
-    return $this->singularName;
-  }
-
-  /**
-   * Get (machine) plural name.
-   *
-   * @return string
-   *   Plural name of type used within WP.
-   */
-  public function getPluralName() {
-    return $this->pluralName;
-  }
-
-  /**
-   * Get definition of type.
-   *
-   * @return array
-   *   Definition used to build type.
-   */
-  public function getDefinition() {
-    return $this->definition;
-  }
-
-  /**
-   * Get \CustomFields\CustomFields container.
-   *
-   * @return \CustomFields\CustomFields
-   *   CustomFields container.
-   */
-  public function getCfs() {
-    return $this->cfs;
+  protected function addColumnsToAdmin() {
+    $definition = $this->getDefinition();
+    if (!empty($definition['add_columns']) && is_array($definition['add_columns'])) {
+      foreach ($definition['add_columns'] as $column => $columnInfo) {
+        new CustomFieldsColumn($this, $column, $columnInfo);
+      }
+    }
   }
 
 }
