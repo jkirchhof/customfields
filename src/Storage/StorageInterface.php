@@ -43,7 +43,7 @@ interface StorageInterface {
    *   ID of post related to key-value pair.
    *
    * @return array
-   *   Stored value, possibly unserialized and/or unescaped.
+   *   Keyed array of stored values, possibly unserialized and/or unescaped.
    */
   public function retrieveAll(int $postId);
 

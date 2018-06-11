@@ -16,7 +16,7 @@ class WPMetaData implements StorageInterface {
     // for the apparent error.
     update_post_meta($postId, $key, $value);
     $storedValue = $this->retrieve($postId, $key);
-    if (is_scalar($storedValue)) {
+    if (is_scalar($value)) {
       return (string) $value == (string) $storedValue;
     }
     else {
@@ -35,7 +35,11 @@ class WPMetaData implements StorageInterface {
    * {@inheritdoc}
    */
   public function retrieveAll(int $postId) {
-    return get_post_meta($postId);
+    $data = get_post_meta($postId);
+    array_walk($data, function (&$val) {
+      $val = maybe_unserialize($val[0]);
+    });
+    return $data;
   }
 
   /**
