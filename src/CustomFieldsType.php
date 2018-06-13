@@ -38,6 +38,13 @@ class CustomFieldsType {
   protected $cfs;
 
   /**
+   * Array of \CustomFields\CustomFieldsField objects, keyed by name.
+   *
+   * @var array
+   */
+  protected $fields = [];
+
+  /**
    * Constructor.  To be invoked by factory method static::buildTypes().
    *
    * @param string $singularName
@@ -60,12 +67,13 @@ class CustomFieldsType {
     }
 
     /* @TODO
-     * Build fields.
      * Build metaboxes.
      * Determine used fields.
      * See details in "custom boxes plan.txt".
      */
-
+    if (!empty($definition['fields'])) {
+      $this->buildFields();
+    }
     if (!empty($definition['replace_archive_with_page'])) {
       $this->replaceArchiveWithPage();
     }
@@ -161,6 +169,18 @@ class CustomFieldsType {
     $name = $this->getSingularName();
     $def = $this->getDefinition()['wp_definition'];
     register_post_type($name, $def);
+  }
+
+  /**
+   * Build field objects from definition.
+   */
+  protected function buildFields() {
+    $definition = $this->getDefinition();
+    if (!empty($definition['fields']) && is_array($definition['fields'])) {
+      foreach ($definition['fields'] as $field => $fieldInfo) {
+        $this->fields[$field] = new CustomFieldsField($this, $field, $fieldInfo);
+      }
+    }
   }
 
   /**
