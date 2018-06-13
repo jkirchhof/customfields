@@ -38,7 +38,7 @@ class CustomFieldsType {
   protected $cfs;
 
   /**
-   * Array of \CustomFields\CustomFieldsField objects, keyed by name.
+   * Array of \CustomFields\CustomFieldsField objects, keyed by field id.
    *
    * @var array
    */
@@ -123,6 +123,29 @@ class CustomFieldsType {
    */
   public function getCfs() {
     return $this->cfs;
+  }
+
+  /**
+   * Get field object by key. Returns NULL if not defined.
+   *
+   * @param string $field
+   *   Key of field object.
+   *
+   * @return \CustomFields\CustomFieldField
+   *   Field object associated with this type.
+   */
+  public function getField(string $field) {
+    return $this->fields[$field] ?: NULL;
+  }
+
+  /**
+   * Get array of all field objects for this type.
+   *
+   * @return array
+   *   Array of \CustomFields\CustomFieldField, keyed by field id.
+   */
+  public function getFields() {
+    return $this->fields;
   }
 
   /**
