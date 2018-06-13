@@ -4,6 +4,7 @@ namespace CustomFields\Tests;
 
 use CustomFields\CustomFields;
 use CustomFields\CustomFieldsType;
+use CustomFields\CustomFieldsField;
 use CustomFields\Cache\WPOptionsCache;
 use CustomFields\Storage\WPMetaData;
 use CustomFields\Tests\Notifier\TestNotifier;
@@ -151,6 +152,37 @@ class CustomFieldsTypeTest extends \WP_UnitTestCase {
     $cf->initialize(__DIR__ . '/definitions');
     $result = CustomFieldsType::buildTypes($cf)['testsample']->getCfs();
     $this->assertInstanceOf(CustomFields::class, $result);
+  }
+
+  /**
+   * Test getField().
+   */
+  public function testGetField() {
+    $cf = new CustomFields(new WPOptionsCache(), new TestNotifier(), new WPMetaData());
+    $cf->initialize(__DIR__ . '/definitions-project1');
+    $p1 = CustomFieldsType::buildTypes($cf)['project1'];
+    $this->assertInstanceOf(CustomFieldsField::class, $p1->getField('project_advisor'));
+    $this->assertNull($p1->getField('undefined field'));
+  }
+
+  /**
+   * Test getFields().
+   */
+  public function testGetFields() {
+    $cf = new CustomFields(new WPOptionsCache(), new TestNotifier(), new WPMetaData());
+    $cf->initialize(__DIR__ . '/definitions-project1');
+    $p1 = CustomFieldsType::buildTypes($cf)['project1']->getFields();
+    $field_list = array_keys($p1);
+    $this->assertEquals([
+      'postimagediv',
+      'project_url',
+      'project_advisor',
+      'excerpt',
+      'project_person',
+      'project_awards',
+      'project_is_old',
+    ], $field_list);
+    $this->assertContainsOnlyInstancesOf(CustomFieldsField::class, $p1);
   }
 
 }

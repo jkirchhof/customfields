@@ -1,0 +1,121 @@
+singular_name: project1
+plural_name: projects1
+
+
+wp_definition:
+  labels:
+    name: Projects
+    singular_name: Project
+    add_new_item: Add New Project
+    edit_item: Edit Project
+    new_item: New Project
+    view_item: View Project
+  public: true
+  exclude_from_search: false
+  hierarchical: true
+  supports:
+    - title
+    - editor
+    - author
+    - thumbnail
+    - excerpt
+    - revisions
+    - page-attributes
+  # capability_type:
+    # - project
+    # - projects
+  map_meta_cap: true
+  has_archive: true
+  rewrite:
+    slug: project
+    with_front: true
+    feeds: true
+    pages: true
+  menu_position: 22
+  menu_icon: dashicons-analytics
+
+
+replace_archive_with_page: true
+#create_shortcode: true
+
+
+fields:
+  postimagediv:
+    type: validation only
+    name: Featured image
+    validate:
+      - not empty
+    error message: Featured image is not set.  Please assign one.
+
+  project_url:
+    type: text
+    allow: url
+    name: Link to project website
+    requires:
+      - edit_projects
+    validate:
+      - url
+
+  project_advisor:
+    type: text
+    name: Faculty Advisor
+    requires:
+      - edit_projects
+    validate:
+      - pattern=/\S+\s+\S+/
+      - min-length=4
+    error message: Faculty Advisor name provided was invalid.
+
+  excerpt:
+    type: validation only
+    name: Short description
+    validate:
+      - min-length=350
+      - max-length=450
+    error message: |
+      Please provide a short description of your project in 350-450
+      characters.
+
+  project_person:
+    type: relation
+    name: Project owner
+    requires:
+      - edit_others_projects
+
+  project_awards:
+    type: array
+    name: NML awards
+    requires:
+      - edit_others_projects
+
+  project_is_old:
+    type: boolean
+    name: List as a previous project
+    requires:
+      - edit_others_projects
+
+
+metaboxes:
+
+  slugdiv:
+    requires:
+      - edit_others_projects
+
+  postexcerpt:
+    display: false
+
+  authordiv:
+    display: false
+
+  person_details:
+    title: Project details
+    requires:
+      - edit_projects
+    fields:
+      - project_url
+      - project_advisor
+      - excerpt
+      - postimagediv
+      - project_person
+      - project_awards
+      - project_is_old

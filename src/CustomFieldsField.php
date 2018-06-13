@@ -42,11 +42,14 @@ class CustomFieldsField {
     $this->cfType = $cfType;
     $this->field = $field;
     $this->fieldInfo = $fieldInfo;
-    // Populate columns.
-    $this->columnContentMethod = 'cf__' . $this->cfType->getPluralName() . '__' . $this->column . '__columnContent';
-    if (!is_callable($this->columnContentMethod)) {
-      $this->columnContentMethod = [$this, 'defaultColumnContentMethod'];
-    }
+    /*
+     * Pattern for field callbacks:
+     * $this->columnContentMethod = 'cf__' . $this->cfType->getPluralName() .
+     *   '__' . $this->field . '__columnContent';
+     * if (!is_callable($this->columnContentMethod)) {
+     *   $this->columnContentMethod = [$this, 'defaultColumnContentMethod'];
+     * }
+     */
 
     /*
      * @TODO:

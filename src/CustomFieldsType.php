@@ -135,7 +135,12 @@ class CustomFieldsType {
    *   Field object associated with this type.
    */
   public function getField(string $field) {
-    return $this->fields[$field] ?: NULL;
+    if (array_key_exists($field, $this->fields)) {
+      return $this->fields[$field];
+    }
+    else {
+      return NULL;
+    }
   }
 
   /**
