@@ -3,7 +3,7 @@
 namespace CustomFields\Exception;
 
 /**
- * Exception to throw when definitions are not found or cannot be parsed.
+ * Exception to throw when field sanitizer method is misconfigured.
  */
 class BadSanitizerException extends RuntimeException {
 

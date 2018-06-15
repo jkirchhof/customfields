@@ -3,7 +3,7 @@
 namespace CustomFields\Exception;
 
 /**
- * Exception to throw when definitions are not found or cannot be parsed.
+ * Exception to throw when field validator method is misconfigured.
  */
 class BadValidatorException extends RuntimeException {
 
