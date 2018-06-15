@@ -4,6 +4,7 @@ namespace CustomFields;
 
 use CustomFields\Cache\CacheInterface;
 use CustomFields\Notifier\NotifierInterface;
+use CustomFields\Storage\StorageInterface;
 use CustomFields\Exception\CacheNullException;
 use CustomFields\Exception\ExceptionInterface;
 use CustomFields\Exception\NoDefinitionsException;
@@ -29,6 +30,13 @@ class CustomFields {
    * @var \CustomFields\Notifier\NotifierInterface
    */
   protected $notifier;
+
+  /**
+   * Storage object.
+   *
+   * @var \CustomFields\Storage\StorageInterface
+   */
+  protected $storage;
 
   /**
    * Definitions, keyed by WP post type.
@@ -61,10 +69,11 @@ class CustomFields {
    * initialize(). Future versions may re-write the constructor such as by using
    * a configuration file to set cache and notifier services.
    */
-  public function __construct(CacheInterface $cache, NotifierInterface $notifier) {
+  public function __construct(CacheInterface $cache, NotifierInterface $notifier, StorageInterface $storage) {
     global $wp_query;
     $this->cache = $cache;
     $this->notifier = $notifier;
+    $this->storage = $storage;
     $this->wpQuery = &$wp_query;
   }
 
@@ -86,6 +95,16 @@ class CustomFields {
    */
   public function getNotifier() {
     return $this->notifier;
+  }
+
+  /**
+   * Get storage object.
+   *
+   * @return \CustomFields\Storage\StorageInterface
+   *   Storage object.
+   */
+  public function getStorage() {
+    return $this->storage;
   }
 
   /**
