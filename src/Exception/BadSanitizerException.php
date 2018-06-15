@@ -25,8 +25,8 @@ class BadSanitizerException extends RuntimeException {
    *   Name of sanitizer.
    */
   public function __construct(string $customFieldType, string $field, string $sanitizer) {
-    $this->message = sprintf('For post type “%1,” the field “%2” has a
-      misconfigured sanitizer.  Check the definition for “%3”. This may cause
+    $this->message = sprintf('For post type “%s,” the field “%s” has a
+      misconfigured sanitizer.  Check the definition for “%s”. This may cause
       unexpected behavior, including allowing unsanitized data to be saved,
       which is a security risk.', $customFieldType, $field, $sanitizer);
   }

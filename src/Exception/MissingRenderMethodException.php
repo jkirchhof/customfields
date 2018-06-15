@@ -23,7 +23,7 @@ class MissingRenderMethodException extends RuntimeException {
    *   Id of field.
    */
   public function __construct(string $customFieldType, string $field) {
-    $this->message = sprintf('For post type “%1,” the field “%2” does not
+    $this->message = sprintf('For post type “%s,” the field “%s” does not
       have a properly configured rendering method.  It will not be displayed on
       post forms.  This could cause additional problems, such as with
       validation.', $customFieldType, $field);
