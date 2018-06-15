@@ -19,6 +19,8 @@ use CustomFields\Storage\WPMetaData;
 
 require_once __DIR__ . '/vendor/autoload.php';
 
-$cfs = new CustomFields(new WPOptionsCache(), new WPNotifier(), new WPMetaData());
-$cfs->initialize(__DIR__ . '/definitions');
-$cfTypes = CustomFieldsType::buildTypes($cfs);
+add_action('init', function () {
+  $cfs = new CustomFields(new WPOptionsCache(), new WPNotifier(), new WPMetaData());
+  $cfs->initialize(__DIR__ . '/definitions');
+  $cfTypes = CustomFieldsType::buildTypes($cfs);
+});
