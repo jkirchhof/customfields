@@ -206,7 +206,10 @@ class CustomFieldsType {
     $definition = $this->getDefinition();
     if (!empty($definition['fields']) && is_array($definition['fields'])) {
       foreach ($definition['fields'] as $field => $fieldInfo) {
-        $this->fields[$field] = new CustomFieldsField($this, $field, $fieldInfo);
+        $newField = CustomFieldsField::buildField($this, $field, $fieldInfo);
+        if (!empty($newField)) {
+          $this->fields[$field] = $newField;
+        }
       }
     }
   }
