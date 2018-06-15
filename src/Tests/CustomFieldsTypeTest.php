@@ -68,10 +68,10 @@ class CustomFieldsTypeTest extends \WP_UnitTestCase {
    */
   public function testDeclarePostType() {
     $cf = new CustomFields(new WPOptionsCache(), new TestNotifier(), new WPMetaData());
-    $cf->initialize(__DIR__ . '/definitions');
+    $cf->initialize(__DIR__ . '/definitions-sample0');
     CustomFieldsType::buildTypes($cf);
     do_action('init');
-    $this->assertTrue(array_key_exists('sample', get_post_types()));
+    $this->assertTrue(array_key_exists('sample0', get_post_types()));
   }
 
   /**
@@ -79,9 +79,9 @@ class CustomFieldsTypeTest extends \WP_UnitTestCase {
    */
   public function testCreateShortcode() {
     $cf = new CustomFields(new WPOptionsCache(), new TestNotifier(), new WPMetaData());
-    $cf->initialize(__DIR__ . '/definitions');
+    $cf->initialize(__DIR__ . '/definitions-withshortcode');
     CustomFieldsType::buildTypes($cf);
-    $result = do_shortcode("[samples]");
+    $result = do_shortcode("[withshortcodes]");
     $this->assertEquals("Shortcode processed successfully.", $result);
   }
 
@@ -178,8 +178,8 @@ class CustomFieldsTypeTest extends \WP_UnitTestCase {
       'project_url',
       'project_advisor',
       'excerpt',
-      'project_person',
-      'project_awards',
+      // 'project_person',
+      // 'project_awards',
       'project_is_old',
     ], $field_list);
     $this->assertContainsOnlyInstancesOf(CustomFieldsField::class, $p1);

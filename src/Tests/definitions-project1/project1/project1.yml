@@ -40,6 +40,7 @@ replace_archive_with_page: true
 
 
 fields:
+
   postimagediv:
     type: validation only
     name: Featured image
@@ -49,12 +50,12 @@ fields:
 
   project_url:
     type: text
-    allow: url
     name: Link to project website
     requires:
       - edit_projects
     validate:
       - url
+    default: http://example.com/
 
   project_advisor:
     type: text
@@ -62,31 +63,33 @@ fields:
     requires:
       - edit_projects
     validate:
-      - pattern=/\S+\s+\S+/
-      - min-length=4
+      - [pattern, /\S+\s+\S+/]
+      - [min-length, 4]
     error message: Faculty Advisor name provided was invalid.
 
   excerpt:
     type: validation only
     name: Short description
     validate:
-      - min-length=350
-      - max-length=450
+      - [min-length, 350]
+      - [max-length, 450]
     error message: |
       Please provide a short description of your project in 350-450
       characters.
+    sanitize:
+      - strip html
 
-  project_person:
-    type: relation
-    name: Project owner
-    requires:
-      - edit_others_projects
-
-  project_awards:
-    type: array
-    name: NML awards
-    requires:
-      - edit_others_projects
+  # project_person:
+  #   type: relation=person
+  #   name: Project owner
+  #   requires:
+  #     - edit_others_projects
+  #
+  # project_awards:
+  #   type: array
+  #   name: NML awards
+  #   requires:
+  #     - edit_others_projects
 
   project_is_old:
     type: boolean

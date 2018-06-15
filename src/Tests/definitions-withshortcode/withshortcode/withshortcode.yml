@@ -1,0 +1,17 @@
+singular_name: withshortcode
+plural_name: withshortcodes
+
+wp_definition:
+  labels:
+    name: With Shortcodes
+    singular_name: With Shortcode
+    add_new_item: Add New With Shortcode
+    edit_item: Edit With Shortcode
+    new_item: New With Shortcode
+    view_item: View With Shortcode
+  public: true
+  exclude_from_search: false
+  hierarchical: true
+
+replace_archive_with_page: true
+create_shortcode: true
