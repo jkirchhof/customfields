@@ -7,7 +7,7 @@ use CustomFields\Exception\BadSanitizerException;
 use CustomFields\Exception\MissingRenderMethodException;
 
 /**
- * Add and manages column for custom field type.
+ * Add and manage field for custom field type.
  */
 class CustomFieldsField {
 
