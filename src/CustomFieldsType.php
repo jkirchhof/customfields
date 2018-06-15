@@ -65,15 +65,20 @@ class CustomFieldsType {
     if (!in_array($singularName, array_keys(get_post_types()))) {
       add_action('init', [$this, 'declarePostType']);
     }
-
-    /* @TODO
-     * Build metaboxes.
-     * Determine used fields.
-     * See details in "custom boxes plan.txt".
-     */
+    // @TODO build fields and metaboxes only for editing pages.  Use an action
+    // or filter, and from it, get the post ID to pass to factories (for use
+    // in checking permissions).
     if (!empty($definition['fields'])) {
       $this->buildFields();
     }
+    if (!empty($definition['metaboxes'])) {
+      $this->buildMetaboxes();
+    }
+    // @TODO save action:
+    // - build list of fields actually allowed & visible in all metaboxes.
+    // - iterate through fields to validate, get sanitized data, do
+    //   contextual validation, and then save.
+    // - print validation etc warnings
     if (!empty($definition['replace_archive_with_page'])) {
       $this->replaceArchiveWithPage();
     }
@@ -209,6 +214,21 @@ class CustomFieldsType {
         $newField = CustomFieldsField::buildField($this, $field, $fieldInfo);
         if (!empty($newField)) {
           $this->fields[$field] = $newField;
+        }
+      }
+    }
+  }
+
+  /**
+   * Build field objects from definition.
+   */
+  protected function buildMetaboxes() {
+    $definition = $this->getDefinition();
+    if (!empty($definition['metaboxes']) && is_array($definition['metaboxes'])) {
+      foreach ($definition['metaboxes'] as $metabox => $metaboxInfo) {
+        $newMetabox = CustomFieldsMetabox::buildMetabox($this, $metabox, $metaboxInfo);
+        if (!empty($newMetabox)) {
+          $this->$metaboxs[$metabox] = $newMetabox;
         }
       }
     }
