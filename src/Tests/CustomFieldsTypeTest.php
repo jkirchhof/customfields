@@ -70,7 +70,6 @@ class CustomFieldsTypeTest extends \WP_UnitTestCase {
     $cf = new CustomFields(new WPOptionsCache(), new TestNotifier(), new WPMetaData());
     $cf->initialize(__DIR__ . '/definitions-sample0');
     CustomFieldsType::buildTypes($cf);
-    do_action('init');
     $this->assertTrue(array_key_exists('sample0', get_post_types()));
   }
 
@@ -171,6 +170,15 @@ class CustomFieldsTypeTest extends \WP_UnitTestCase {
   public function testGetFields() {
     $cf = new CustomFields(new WPOptionsCache(), new TestNotifier(), new WPMetaData());
     $cf->initialize(__DIR__ . '/definitions-project1');
+    $postId = wp_insert_post([
+      'post_title' => "WPMetaDataTest test post of type project1",
+      'post_content' => "content of WPMetaDataTest test post",
+      'post_status' => 'publish',
+      'post_author' => 1,
+      'post_type' => 'project1',
+    ]);
+    $post = get_post($postId);
+    do_action('add_meta_boxes_project1', $post);
     $p1 = CustomFieldsType::buildTypes($cf)['project1']->getFields();
     $field_list = array_keys($p1);
     $this->assertEquals([

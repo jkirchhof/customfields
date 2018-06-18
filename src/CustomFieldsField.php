@@ -174,16 +174,31 @@ class CustomFieldsField {
    *   Field object.
    */
   public static function buildField(CustomFieldsType $cfType, string $field, array $fieldInfo) {
+    $post = $cfType->getPost;
+    if (!empty($post) && !empty($post->ID)) {
+      $postId = $post->ID;
+    }
+    else {
+      $postId = 0;
+    }
     if (!empty($fieldInfo['requires']) && is_array($fieldInfo['requires'])) {
       foreach ($fieldInfo['requires'] as $permission) {
-        // @TODO Remove "0 &&" once roles with permissions are set up.
-        if (0 && !current_user_can($permission)) {
+        if (!current_user_can($permission, $post)) {
           return;
         }
       }
     }
-    // @TODO also pass post object or ID
-    return new static($cfType, $field, $fieldInfo, 0);
+    return new static($cfType, $field, $fieldInfo, $postId);
+  }
+
+  /**
+   * Get machine name of field.
+   *
+   * @return string
+   *   Machine name of field.
+   */
+  public function getField() {
+    return $this->field;
   }
 
   /**
@@ -248,7 +263,7 @@ class CustomFieldsField {
    *   HTML returned from render method.
    */
   public function getRenderedField() {
-    return $this->renderMethod();
+    return ($this->renderMethod)();
   }
 
   /**
@@ -361,9 +376,9 @@ class CustomFieldsField {
         }
         switch ($sanitizerType) {
           case 'strip html':
-            $this->fieldSanitizerMethods[] = [
-              [$this, 'sanitizeStripHtml'],
-            ];
+            $this->fieldSanitizerMethods[] = function ($input) {
+              return $this->sanitizeStripHtml($input);
+            };
             break;
 
           default:
@@ -381,20 +396,28 @@ class CustomFieldsField {
     $renderMethod = 'cf__' . $this->cfType->getPluralName() .
       '__' . $this->field . '__renderMethod';
     if (is_callable($renderMethod)) {
-      $this->renderMethod = $renderMethod;
+      $this->renderMethod = function () use ($renderMethod) {
+        return $renderMethod();
+      };
     }
     else {
       switch ($this->fieldInfo['type']) {
         case 'validation only':
-          $this->renderMethod = [$this, 'renderNothing'];
+          $this->renderMethod = function () {
+            return $this->renderNothing();
+          };
           break;
 
         case 'text':
-          $this->renderMethod = [$this, 'renderTextField'];
+          $this->renderMethod = function () {
+            return $this->renderTextField();
+          };
           break;
 
         case 'boolean':
-          $this->renderMethod = [$this, 'renderBooleanField'];
+          $this->renderMethod = function () {
+            return $this->renderBooleanField();
+          };
           break;
 
         default:

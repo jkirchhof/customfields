@@ -52,6 +52,9 @@ class CustomFieldsMetabox {
   /**
    * Array of fields in metabox, after checking permission, context, etc.
    *
+   * Each is an object of \CustomFields\CustomFields\Fields, keyed by
+   * its id.
+   *
    * @var array
    */
   protected $metaboxFields;
@@ -76,7 +79,7 @@ class CustomFieldsMetabox {
     $this->metabox = $metabox;
     $this->metaboxInfo = $metaboxInfo;
     $this->postId;
-    $this->title = $metaboxInfo['title'];
+    $this->title = empty($metaboxInfo['title']) ? NULL : $metaboxInfo['title'];
     $this->setRenderMethod();
     $this->setMetaboxFields();
   }
@@ -95,18 +98,47 @@ class CustomFieldsMetabox {
    *   Metabox object.
    */
   public static function buildMetabox(CustomFieldsType $cfType, string $metabox, array $metaboxInfo) {
+    $post = $cfType->getPost;
+    if (!empty($post) && !empty($post->ID)) {
+      $postId = $post->ID;
+    }
+    else {
+      $postId = 0;
+    }
     if (!empty($metaboxInfo['requires']) && is_array($metaboxInfo['requires'])) {
       foreach ($metaboxInfo['requires'] as $permission) {
-        // @TODO Remove "0 &&" once roles with permissions are set up.
-        // @TODO Action to remove boxes when not allowed or in wrong context:
-        // callback provided cftype, metabox id, and admin page context.
-        if (0 && !current_user_can($permission)) {
+        if (!empty($metaboxInfo['display']) && $metaboxInfo['display'] == 'false') {
+          // @TODO remove box.
+          return;
+        }
+        if (!current_user_can($permission, $post)) {
+          // @TODO Action to remove boxes when not allowed or in wrong context:
+          // callback provided cftype, metabox id, and admin page context.
           return;
         }
       }
     }
-    // @TODO also pass post object or ID
-    return new static($cfType, $metabox, $metaboxInfo, 0);
+    return new static($cfType, $metabox, $metaboxInfo, $postId);
+  }
+
+  /**
+   * Get machine name of metabox.
+   *
+   * @return string
+   *   Machine name of metabox.
+   */
+  public function getMetabox() {
+    return $this->metabox;
+  }
+
+  /**
+   * Human readable title of metabox.
+   *
+   * @return string
+   *   Title of metabox.
+   */
+  public function getTitle() {
+    return $this->title;
   }
 
   /**
@@ -116,7 +148,6 @@ class CustomFieldsMetabox {
    *   Array of fields in metabox.
    */
   public function getMetaboxFields() {
-    // @TODO use field names or objects?
     return $this->metaboxFields;
   }
 
@@ -125,12 +156,16 @@ class CustomFieldsMetabox {
    */
   protected function setRenderMethod() {
     $renderMethod = 'cf__' . $this->cfType->getPluralName() .
-      '__' . $this->field . '__renderMethod';
+      '__' . $this->metabox . '__renderMethod';
     if (is_callable($renderMethod)) {
-      $this->renderMethod = $renderMethod;
+      $this->renderMethod = function () use ($renderMethod) {
+        return $renderMethod();
+      };
     }
     else {
-      $this->renderMethod = [$this, 'defaultRenderMetabox'];
+      $this->renderMethod = function () {
+        return $this->defaultRenderMetabox();
+      };
     }
   }
 
@@ -138,8 +173,15 @@ class CustomFieldsMetabox {
    * Determine and set fields available to metabox.
    */
   protected function setMetaboxFields() {
-    // @TODO filter fields from definition to only include those defined and
-    // set those fields in $this->metaboxFields.
+    if (empty($this->metaboxInfo['fields'])) {
+      return;
+    }
+    foreach ($this->metaboxInfo['fields'] as $field) {
+      $builtField = $this->cfType->getField($field);
+      if (!empty($builtField)) {
+        $this->metaboxFields[$field] = $builtField;
+      }
+    }
   }
 
   /**
@@ -149,9 +191,16 @@ class CustomFieldsMetabox {
    *   HTML to be printed as metabox content.
    */
   protected function defaultRenderMetabox() {
-    // @TODO For each field, wrap it in div with class names and
-    // return it.
-    return $metaboxHtml;
+    $renderedFields = array_map(function ($field) {
+      $fieldId = $field->getField();
+      return '<div class="field field__' . $fieldId . '">' .
+        $field->getRenderedField() .
+        '</div>';
+    }, $this->metaboxFields);
+    if (empty($renderedFields)) {
+      return '';
+    }
+    return implode($renderedFields);
   }
 
   /**
@@ -159,7 +208,7 @@ class CustomFieldsMetabox {
    */
   public function printMetaboxHtml() {
     // @TODO add JS/CSS
-    print $this->renderMethod();
+    print ($this->renderMethod)();
   }
 
 }

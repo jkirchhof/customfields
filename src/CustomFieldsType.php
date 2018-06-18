@@ -38,11 +38,25 @@ class CustomFieldsType {
   protected $cfs;
 
   /**
+   * Wordpress post object relevant to current request.
+   *
+   * @var object
+   */
+  protected $post;
+
+  /**
    * Array of \CustomFields\CustomFieldsField objects, keyed by field id.
    *
    * @var array
    */
   protected $fields = [];
+
+  /**
+   * Array of \CustomFields\CustomFieldsMetabox objects, keyed by metabox id.
+   *
+   * @var array
+   */
+  protected $metaboxes = [];
 
   /**
    * Constructor.  To be invoked by factory method static::buildTypes().
@@ -54,7 +68,8 @@ class CustomFieldsType {
    * @param array $definition
    *   Definition used to build type.
    * @param \CustomFields\CustomFields $cfs
-   *   CustomFields object used as container; includes cache and notifier.
+   *   CustomFields object used as container; includes cache, notifier, and
+   *   storage objects.
    */
   protected function __construct(string $singularName, string $pluralName, array $definition, CustomFields $cfs) {
     $this->singularName = $singularName;
@@ -63,17 +78,9 @@ class CustomFieldsType {
     $this->cfs = $cfs;
     // Existing post types aren't redeclared.
     if (!in_array($singularName, array_keys(get_post_types()))) {
-      add_action('init', [$this, 'declarePostType']);
+      $this->declarePostType();
     }
-    // @TODO build fields and metaboxes only for editing pages.  Use an action
-    // or filter, and from it, get the post ID to pass to factories (for use
-    // in checking permissions).
-    if (!empty($definition['fields'])) {
-      $this->buildFields();
-    }
-    if (!empty($definition['metaboxes'])) {
-      $this->buildMetaboxes();
-    }
+    add_action("add_meta_boxes_{$this->singularName}", [$this, 'prepareFields']);
     // @TODO save action:
     // - build list of fields actually allowed & visible in all metaboxes.
     // - iterate through fields to validate, get sanitized data, do
@@ -128,6 +135,16 @@ class CustomFieldsType {
    */
   public function getCfs() {
     return $this->cfs;
+  }
+
+  /**
+   * Get post object relevant to current request.
+   *
+   * @return object|null
+   *   Wordpress post object or NULL.
+   */
+  public function getPost() {
+    return $this->post ?: NULL;
   }
 
   /**
@@ -196,12 +213,42 @@ class CustomFieldsType {
   }
 
   /**
-   * Callback for 'init' action to register this type with WP.
+   * Register this type with WP.
    */
   public function declarePostType() {
     $name = $this->getSingularName();
     $def = $this->getDefinition()['wp_definition'];
     register_post_type($name, $def);
+  }
+
+  /**
+   * Build fields and metaboxes.
+   *
+   * Is a callback for WP action (such as add_meta_box).
+   *
+   * @param object|null $post
+   *   Wordpress post object related to current request.
+   */
+  public function prepareFields($post = NULL) {
+    $this->post = $post;
+    if (!empty($this->definition['fields'])) {
+      $this->buildFields();
+    }
+    if (!empty($this->definition['metaboxes'])) {
+      $this->buildMetaboxes();
+    }
+    foreach ($this->metaboxes as $metabox) {
+      if ($metabox->getTitle()) {
+        add_meta_box(
+          $metabox->getMetabox(),
+          $metabox->getTitle(),
+          [$metabox, 'printMetaboxHtml'],
+          $this->singularName,
+          'normal',
+          'default'
+        );
+      }
+    }
   }
 
   /**
@@ -228,7 +275,7 @@ class CustomFieldsType {
       foreach ($definition['metaboxes'] as $metabox => $metaboxInfo) {
         $newMetabox = CustomFieldsMetabox::buildMetabox($this, $metabox, $metaboxInfo);
         if (!empty($newMetabox)) {
-          $this->$metaboxs[$metabox] = $newMetabox;
+          $this->metaboxes[$metabox] = $newMetabox;
         }
       }
     }
