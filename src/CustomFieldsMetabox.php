@@ -57,7 +57,7 @@ class CustomFieldsMetabox {
    *
    * @var array
    */
-  protected $metaboxFields;
+  protected $metaboxFields = [];
 
   /**
    * Construct object for field.
@@ -208,6 +208,7 @@ class CustomFieldsMetabox {
    */
   public function printMetaboxHtml() {
     // @TODO add JS/CSS
+    // @TODO add nonce using wp_nonce_field().
     print ($this->renderMethod)();
   }
 

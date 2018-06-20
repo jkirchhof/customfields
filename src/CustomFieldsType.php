@@ -81,11 +81,7 @@ class CustomFieldsType {
       $this->declarePostType();
     }
     add_action("add_meta_boxes_{$this->singularName}", [$this, 'prepareFields']);
-    // @TODO save action:
-    // - build list of fields actually allowed & visible in all metaboxes.
-    // - iterate through fields to validate, get sanitized data, do
-    //   contextual validation, and then save.
-    // - print validation etc warnings
+    add_action("save_post_{$this->singularName}", [$this, 'saveFieldsData']);
     if (!empty($definition['replace_archive_with_page'])) {
       $this->replaceArchiveWithPage();
     }
@@ -176,6 +172,34 @@ class CustomFieldsType {
   }
 
   /**
+   * Get metabox object by key. Returns NULL if not defined.
+   *
+   * @param string $metabox
+   *   Key of metabox object.
+   *
+   * @return \CustomFields\CustomFieldMetabox
+   *   Metabox object associated with this type.
+   */
+  public function getMetabox(string $metabox) {
+    if (array_key_exists($metabox, $this->metaboxes)) {
+      return $this->metaboxes[$metabox];
+    }
+    else {
+      return NULL;
+    }
+  }
+
+  /**
+   * Get array of all metabox objects for this type.
+   *
+   * @return array
+   *   Array of \CustomFields\CustomFieldMetabox, keyed by metabox id.
+   */
+  public function getMetaboxes() {
+    return $this->metaboxes;
+  }
+
+  /**
    * Factory to create type/fields objects from definitions.
    *
    * @param \CustomFields\CustomFields $cfs
@@ -249,6 +273,42 @@ class CustomFieldsType {
         );
       }
     }
+  }
+
+  /**
+   * Determine fields to save; validate, sanitize, issue warnings, and/or save.
+   *
+   * Is a callback for WP action (such as save_post).
+   *
+   * @param int $postId
+   *   Wordpress post ID related to current request.
+   */
+  public function saveFieldsData(int $postId = 0) {
+    // Don't include in auto-save.
+    if (defined('\DOING_AUTOSAVE') && \DOING_AUTOSAVE) {
+      return;
+    }
+    // Method must handle its own permission check.
+    if (!current_user_can('edit_page', $postIdd)) {
+      return;
+    }
+    $nonce = isset($_POST['post_options_nonce']) ? $_POST['post_options_nonce'] : NULL;
+    if (!wp_verify_nonce($nonce, 'post_options_nonce')) {
+      // @TODO implement nonce per metabox; check all; return if any fail to match.
+    }
+    $metaboxes = $this->getMetaboxes();
+    if (empty($metaboxes)) {
+      return;
+    }
+    $fieldsToSave = array_reduce($metaboxes, function ($fieldsToSave, $metabox) {
+      return array_merge($fieldsToSave, $metabox->getMetaboxFields());
+    }, []);
+    array_map(function ($field) {
+      $field->callContextualValidator();
+    }, $fieldsToSave);
+    array_map(function ($field) {
+      $field->persistValue();
+    }, $fieldsToSave);
   }
 
   /**

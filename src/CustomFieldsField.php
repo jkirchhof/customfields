@@ -467,10 +467,22 @@ class CustomFieldsField {
   }
 
   /**
-   * Call method for contextual validation, passing $this to it.
+   * Call method for contextual validation, if set, passing $this to it.
    */
   public function callContextualValidator() {
-    $this->contextualValidator($this);
+    if (!empty($this->contextualValidator)) {
+      ($this->contextualValidator)($this);
+    }
+  }
+
+  /**
+   * Persist value to storage, if field is to be saved.
+   */
+  public function persistValue() {
+    // @TODO:
+    // Check for custom persist method.
+    // Check if type or validity status means don't persist.
+    // Persist if allowed.
   }
 
   /**
