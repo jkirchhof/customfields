@@ -46,6 +46,13 @@ class CustomFields {
   protected $definitions;
 
   /**
+   * Filesystem path to definitions.
+   *
+   * @var string
+   */
+  protected $definitionsPath;
+
+  /**
    * Initialization state of object (usually unset or TRUE)
    *
    * @var bool
@@ -154,8 +161,9 @@ class CustomFields {
     if ($this->isInitialized()) {
       return $this;
     }
+    $this->definitionsPath = $definitionsPath;
     try {
-      $definitionDirs = $this->findDefinitions($definitionsPath);
+      $definitionDirs = $this->findDefinitions();
       $definitionHashes = array_map(['CustomFields\\CustomFieldsUtilities', 'hashDirectory'], $definitionDirs);
     }
     catch (ExceptionInterface $e) {
@@ -170,16 +178,14 @@ class CustomFields {
   /**
    * Find YAML definitions.
    *
-   * @param string $definitionsPath
-   *   Path to directory of definitions.
-   *
    * @return array
    *   Array of definition_name => definition_directory_path.
    *
    * @throws \CustomFields\Exception\NoDefinitionsException
    *   Thrown if no definitions are defined.
    */
-  protected function findDefinitions(string $definitionsPath) {
+  protected function findDefinitions() {
+    $definitionsPath = $this->definitionsPath;
     if (is_dir($definitionsPath)) {
       $dir = dir($definitionsPath);
     }
@@ -191,19 +197,37 @@ class CustomFields {
       if ($defName[0] != '.' && is_dir($definitionsPath . '/' . $defName)) {
         $defDir = $definitionsPath . '/' . $defName;
         $ymlPath = $defDir . '/' . $defName . '.yml';
-        $phpPath = $defDir . '/' . $defName . '.php';
         if (file_exists($ymlPath)) {
           $definitions[$defName] = $defDir;
-          if (file_exists($phpPath)) {
-            include $phpPath;
-          }
         }
       }
     };
     if (empty($definitions)) {
       throw new NoDefinitionsException();
     }
+    $this->autoloadDefinitionClasses();
     return $definitions;
+  }
+
+  /**
+   * Define autoloader for definition classes.
+   *
+   * Code partly borrowed from https://www.php-fig.org/psr/psr-4/examples/.
+   */
+  protected function autoloadDefinitionClasses() {
+    spl_autoload_register(function ($class) {
+      $prefix = 'CustomFieldsDefinition\\';
+      $baseDir = $this->definitionsPath . '/';
+      $len = strlen($prefix);
+      if (strncmp($prefix, $class, $len) !== 0) {
+        return;
+      }
+      $relativeClass = substr($class, $len);
+      $file = $baseDir . str_replace('\\', '/', $relativeClass) . '.php';
+      if (file_exists($file)) {
+        require $file;
+      }
+    });
   }
 
   /**
@@ -231,6 +255,10 @@ class CustomFields {
       }
       if ($definition) {
         $definitions[$type] = $definition;
+      }
+      $className = "\\CustomFieldsDefinition\\$type\\" . ucfirst($type);
+      if (class_exists($className)) {
+        $definitions[$type]['class'] = new $className();
       }
     }
     return $definitions;
