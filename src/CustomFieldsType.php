@@ -40,9 +40,23 @@ class CustomFieldsType {
   /**
    * Wordpress post object relevant to current request.
    *
-   * @var object
+   * @var int
    */
-  protected $post;
+  protected $postId;
+
+  /**
+   * Key for short term storage of warnings etc related to post.
+   *
+   * @var string
+   */
+  protected $transientId = '';
+
+  /**
+   * Whether user is saving data or data comes from already persisted values.
+   *
+   * @var bool
+   */
+  protected $userRequestedSave = FALSE;
 
   /**
    * Array of \CustomFields\CustomFieldsField objects, keyed by field id.
@@ -80,6 +94,7 @@ class CustomFieldsType {
     if (!in_array($singularName, array_keys(get_post_types()))) {
       $this->declarePostType();
     }
+    add_filter('post_updated_messages', [$this, 'addWarningsToMessages']);
     add_action("add_meta_boxes_{$this->singularName}", [$this, 'prepareFields']);
     add_action("save_post_{$this->singularName}", [$this, 'saveFieldsData']);
     if (!empty($definition['replace_archive_with_page'])) {
@@ -134,13 +149,33 @@ class CustomFieldsType {
   }
 
   /**
-   * Get post object relevant to current request.
+   * Get post object ID relevant to current request.
    *
-   * @return object|null
-   *   Wordpress post object or NULL.
+   * @return int
+   *   Wordpress post ID or 0.
    */
-  public function getPost() {
-    return $this->post ?: NULL;
+  public function getPostId() {
+    return $this->postId ?: 0;
+  }
+
+  /**
+   * Get transient key relevant to current request.
+   *
+   * @return string
+   *   Key for short term storage of warnings etc related to post.
+   */
+  public function getTransientId() {
+    return $this->transientId;
+  }
+
+  /**
+   * Get status of flag $userRequestedSave.
+   *
+   * @return bool
+   *   TRUE is user request save.  FALSE is values come from persisted data.
+   */
+  public function getUserRequestedSave() {
+    return $this->userRequestedSave;
   }
 
   /**
@@ -250,11 +285,22 @@ class CustomFieldsType {
    *
    * Is a callback for WP action (such as add_meta_box).
    *
-   * @param object|null $post
-   *   Wordpress post object related to current request.
+   * @param object|int $post
+   *   Wordpress post object or post ID related to current request.
    */
   public function prepareFields($post = NULL) {
-    $this->post = $post;
+    if (empty($post)) {
+      $this->postId = 0;
+    }
+    else {
+      if (is_object($post)) {
+        $this->postId = $post->ID;
+      }
+      else {
+        $this->postId = (int) $post;
+      }
+    }
+    $this->setTransientId();
     if (!empty($this->definition['fields'])) {
       $this->buildFields();
     }
@@ -289,13 +335,15 @@ class CustomFieldsType {
       return;
     }
     // Method must handle its own permission check.
-    if (!current_user_can('edit_page', $postIdd)) {
+    if (!current_user_can('edit_page', $postId)) {
       return;
     }
     $nonce = isset($_POST['post_options_nonce']) ? $_POST['post_options_nonce'] : NULL;
     if (!wp_verify_nonce($nonce, 'post_options_nonce')) {
       // @TODO implement nonce per metabox; check all; return if any fail to match.
     }
+    $this->userRequestedSave = TRUE;
+    $this->prepareFields($postId);
     $metaboxes = $this->getMetaboxes();
     if (empty($metaboxes)) {
       return;
@@ -306,8 +354,8 @@ class CustomFieldsType {
     array_map(function ($field) {
       $field->callContextualValidator();
     }, $fieldsToSave);
-    array_map(function ($field) {
-      $field->persistValue();
+    array_map(function ($field) use ($postId) {
+      $field->persistValue($postId);
     }, $fieldsToSave);
   }
 
@@ -339,6 +387,96 @@ class CustomFieldsType {
         }
       }
     }
+  }
+
+  /**
+   * Set transient ID from $this->postId or $_GET data.
+   */
+  protected function setTransientId() {
+    if (!empty($this->postId)) {
+      $postId = $this->postId;
+    }
+    elseif (!empty($_GET['post'])) {
+      $postId = (int) $_GET['post'];
+    }
+    else {
+      $postId = 0;
+    }
+    $this->transientId = 'custom_post_message_' . $postId . '_' .
+      get_current_user_id();
+  }
+
+  /**
+   * Callback to maniupulate Wordpress messages.
+   *
+   * @param array $messages
+   *   Messages array supplied by Wordpress.
+   *
+   * @return array
+   *   Messages array with warnings added to selected message.
+   */
+  public function addWarningsToMessages(array $messages) {
+    if (empty($this->getTransientId())) {
+      $this->setTransientId();
+    }
+    $warnings = $this
+      ->cfs
+      ->getNotifier()
+      ->retrieveWarnings($this->getTransientId());
+    if (is_array($warnings)) {
+      // Modified from wp-admin/edit-form-advanced.php...
+      // Get value of intended message.
+      if (isset($_GET['message'])) {
+        $messageId = (int) $_GET['message'];
+        if (isset($messages[$this->singularName][$messageId])) {
+          $message = $messages[$this->singularName][$messageId];
+        }
+        elseif (empty($messages[$this->singularName]) && isset($messages['post'][$messageId])) {
+          $message = $messages['post'][$messageId];
+        }
+      }
+      // Append custom warnings to $message.
+      $errorMessages = $warnings['messages'];
+      if (count($errorMessages) === 1) {
+        $message .= "</p><p class='warning'>Warning: " . $errorMessages[0];
+      }
+      elseif (count($errorMessages)) {
+        $message .= "</p><p><span class='warning'>Warnings:</span><ul>";
+        foreach ($errorMessages as $errorMessage) {
+          $message .= "<li class='warning'>$errorMessage</li>";
+        }
+        $message .= "</ul>";
+      }
+      // Set values so WP core to display combined message.
+      $_GET['message'] = 1;
+      $messages[$this->singularName][1] = $message;
+
+      // Add JS to page, assigning warning class.
+      // @TODO Attach script properly instead of echoing here.
+      $errorElements = $warnings['elements'];
+      if (count($errorElements)) {
+        $errorElements = array_reduce($errorElements, function ($carry, $item) {
+          $carry = empty($carry) ? '' : $carry . ', ';
+          $carry .= "#$item, .field__$item";
+          return $carry;
+        }, '');
+        echo "
+<script type='text/javascript'>
+  (function() {
+    window.addEventListener('load', function () {
+      console.log('$errorElements');
+      var els = document.querySelectorAll('$errorElements');
+      for (var i=0; i<els.length; i++) {
+        els[i].classList.add('warning');
+      }
+    }, false);
+  })();
+</script>
+        ";
+      }
+
+    }
+    return $messages;
   }
 
   /**
