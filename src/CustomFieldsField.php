@@ -100,11 +100,6 @@ class CustomFieldsField {
   /**
    * Methods to call for initial field validation.
    *
-   * Each element is an array:
-   *   0 => callable
-   *   1 => args passed to callable
-   * Args array can be empty but is unpacked if existant.
-   *
    * @var array
    */
   protected $fieldValidationMethods;
@@ -127,11 +122,6 @@ class CustomFieldsField {
 
   /**
    * Methods to call for field sanitization.
-   *
-   * Each element is an array:
-   *   0 => callable
-   *   1 => args passed to callable
-   * Args array can be empty but is unpacked if existant.
    *
    * @var array
    */
@@ -322,11 +312,9 @@ class CustomFieldsField {
    */
   protected function setValidators() {
     // Look for custom validator.
-    $fieldValidtionMethod = 'cf__' . $this->cfType->getPluralName() .
-      '__' . $this->field . '__validationMethod';
-    if (is_callable($fieldValidtionMethod)) {
-      $this->fieldValidationMethods[] = function ($input) use ($fieldValidtionMethod) {
-        return ($fieldValidtionMethod)($input);
+    if (method_exists($this->cfType->getObject(), $this->field . 'Validation')) {
+      $this->fieldValidationMethods[] = function ($input) {
+        return $this->cfType->getObject()->{$this->field . 'Validation'}($this);
       };
     }
     if (!empty($this->fieldInfo['validate']) && is_array($this->fieldInfo['validate'])) {
@@ -380,10 +368,10 @@ class CustomFieldsField {
    * Look for contextualValidator, and set it if declared.
    */
   protected function setContextualValidator() {
-    $contextualValidator = 'cf__' . $this->cfType->getPluralName() .
-      '__' . $this->field . '__contextualValidator';
-    if (is_callable($contextualValidator)) {
-      $this->contextualValidator = $contextualValidator;
+    if (method_exists($this->cfType->getObject(), $this->field . 'ContextualValidator')) {
+      $this->contextualValidator = function () {
+        return $this->cfType->getObject()->{$this->field . 'ContextualValidator'}($this);
+      };
     }
   }
 
@@ -392,11 +380,9 @@ class CustomFieldsField {
    */
   protected function setSanitizers() {
     // Look for custom sanitizer.
-    $fieldSanitizerMethod = 'cf__' . $this->cfType->getPluralName() .
-      '__' . $this->field . '__sanitizerMethod';
-    if (is_callable($fieldSanitizerMethod)) {
-      $this->fieldSanitizerMethods[] = function ($input) use ($fieldSanitizerMethod) {
-        return ($fieldSanitizerMethod)($input);
+    if (method_exists($this->cfType->getObject(), $this->field . 'Sanitizer')) {
+      $this->fieldSanitizerMethods[] = function ($input) {
+        return $this->cfType->getObject()->{$this->field . 'Sanitizer'}($input);
       };
     }
     if (!empty($this->fieldInfo['sanitize']) && is_array($this->fieldInfo['sanitize'])) {
@@ -427,11 +413,9 @@ class CustomFieldsField {
    * Look for render method, and set it.  Fallback to default when possible.
    */
   protected function setRenderMethod() {
-    $renderMethod = 'cf__' . $this->cfType->getPluralName() .
-      '__' . $this->field . '__renderMethod';
-    if (is_callable($renderMethod)) {
-      $this->renderMethod = function () use ($renderMethod) {
-        return $renderMethod($this);
+    if (method_exists($this->cfType->getObject(), $this->field . 'Render')) {
+      $this->renderMethod = function () {
+        return $this->cfType->getObject()->{$this->field . 'Render'}($this);
       };
     }
     else {
@@ -509,7 +493,7 @@ class CustomFieldsField {
    */
   public function callContextualValidator() {
     if (!empty($this->contextualValidator)) {
-      ($this->contextualValidator)($this);
+      ($this->contextualValidator)();
     }
   }
 
@@ -522,10 +506,8 @@ class CustomFieldsField {
   public function persistValue(int $postId) {
     // If a custom persist method exists, it needs to handle all decisions
     // including cases where it doesn't actually persist data.
-    $customPersistMethod = 'cf__' . $this->cfType->getPluralName() .
-      '__' . $this->field . '__persist';
-    if (is_callable($customPersistMethod)) {
-      ($customPersistMethod)($this);
+    if (method_exists($this->cfType->getObject(), $this->field . 'Persist')) {
+      $this->cfType->getObject()->{$this->field . 'Persist'}($this);
       return;
     }
     // Calling getValue() ensures that validation and sanitization occur.

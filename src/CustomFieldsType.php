@@ -2,6 +2,7 @@
 
 namespace CustomFields;
 
+use CustomFields\Definition\NullDefinition;
 use CustomFields\Exception\BadDefinitionException;
 
 /**
@@ -29,6 +30,13 @@ class CustomFieldsType {
    * @var array
    */
   protected $definition;
+
+  /**
+   * CustomFieldsDefinition object, potentially with custom methods.
+   *
+   * @var \CustomFields\Definition\DefinitionInterface
+   */
+  protected $object;
 
   /**
    * CustomFields object; serves as DI container for cache and notifier.
@@ -89,6 +97,7 @@ class CustomFieldsType {
     $this->singularName = $singularName;
     $this->pluralName = $pluralName;
     $this->definition = $definition;
+    $this->object = empty($definition['object']) ? new NullDefinition() : $definition['object'];
     $this->cfs = $cfs;
     // Existing post types aren't redeclared.
     if (!in_array($singularName, array_keys(get_post_types()))) {
@@ -136,6 +145,16 @@ class CustomFieldsType {
    */
   public function getDefinition() {
     return $this->definition;
+  }
+
+  /**
+   * Get object with custom methods for type.
+   *
+   * @return \CustomFields\Definition\DefinitionInterface
+   *   Object with custom methods for type.
+   */
+  public function getObject() {
+    return $this->object;
   }
 
   /**
@@ -579,9 +598,8 @@ class CustomFieldsType {
    * Declare callback for shortcode, or notify admins if callback is missing.
    */
   protected function createShortcode() {
-    $expectedCallback = 'cf__' . $this->getPluralName() . '__shortcode';
-    if (is_callable($expectedCallback)) {
-      add_shortcode($this->getPluralName(), $expectedCallback);
+    if (method_exists($this->object, 'shortcodeRender')) {
+      add_shortcode($this->getPluralName(), [$this->object, 'shortcodeRender']);
     }
     else {
       $message = sprintf('<strong>Error defining shortcode for type ' .

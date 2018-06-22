@@ -54,9 +54,8 @@ class CustomFieldsColumn {
     add_filter('manage_' . $singularName . '_posts_columns',
       [$this, 'addColumn']);
     // Populate columns.
-    $this->columnContentMethod = 'cf__' . $this->cfType->getPluralName() . '__' . $this->column . '__columnContent';
-    if (!is_callable($this->columnContentMethod)) {
-      $this->columnContentMethod = [$this, 'defaultColumnContentMethod'];
+    if (!is_callable($this->cfType->getObject()->{$this->column . 'ColumnContent'})) {
+      $this->columnContentMethod = $this->cfType->getObject()->{$this->column . 'ColumnContent'};
     }
     add_action('manage_' . $singularName . '_posts_custom_column',
       [$this, 'addColumnContent'], 10, 2);
@@ -64,13 +63,11 @@ class CustomFieldsColumn {
     if (!empty($columnInfo['sort'])) {
       add_filter('manage_edit-' . $singularName . '_sortable_columns',
         [$this, 'makeColumnSortable']);
-      // @TODO Write integration test for custom sort.
-      $customColumnSortMethod = 'cf__' . $this->cfType->getPluralName() . '__' . $column . '__columnSort';
-      if (is_callable($customColumnSortMethod)) {
-        $columnSortMethod = $customColumnSortMethod;
+      if (!is_callable($this->cfType->getObject()->{$this->column . 'ColumnSort'})) {
+        $columnSortMethod = $this->cfType->getObject()->{$this->column . 'ColumnSort'};
       }
       else {
-        $columnSortMethod = [$this, 'defaultColumnSort'];
+        $columnSortMethod = $this->defaultColumnSort;
       }
       // @TODO Consider adding option to call custom method with filter
       // 'posts_clauses' instead of this action, based on value in

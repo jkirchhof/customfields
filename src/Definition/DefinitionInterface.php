@@ -1,6 +1,6 @@
 <?php
 
-namespace CustomFields;
+namespace CustomFields\Definition;
 
 /**
  * Interface for type definitions.
