@@ -71,14 +71,12 @@ class CustomFieldsMetabox {
    *   Machine name of metabox.
    * @param array $metaboxInfo
    *   Metabox definition.
-   * @param int $postId
-   *   Post ID (0 for new post) for which metabox is being built.
    */
-  protected function __construct(CustomFieldsType $cfType, string $metabox, array $metaboxInfo, int $postId) {
+  protected function __construct(CustomFieldsType $cfType, string $metabox, array $metaboxInfo) {
     $this->cfType = $cfType;
     $this->metabox = $metabox;
     $this->metaboxInfo = $metaboxInfo;
-    $this->postId;
+    $this->postId = $cfType->getPostId();
     $this->title = empty($metaboxInfo['title']) ? NULL : $metaboxInfo['title'];
     $this->setRenderMethod();
     $this->setMetaboxFields();
@@ -98,27 +96,26 @@ class CustomFieldsMetabox {
    *   Metabox object.
    */
   public static function buildMetabox(CustomFieldsType $cfType, string $metabox, array $metaboxInfo) {
-    $post = $cfType->getPost;
-    if (!empty($post) && !empty($post->ID)) {
-      $postId = $post->ID;
-    }
-    else {
-      $postId = 0;
+    if (!empty($metaboxInfo['display']) && $metaboxInfo['display'] == 'remove') {
+      $removeBox = TRUE;
     }
     if (!empty($metaboxInfo['requires']) && is_array($metaboxInfo['requires'])) {
       foreach ($metaboxInfo['requires'] as $permission) {
-        if (!empty($metaboxInfo['display']) && $metaboxInfo['display'] == 'false') {
-          // @TODO remove box.
-          return;
-        }
-        if (!current_user_can($permission, $post)) {
-          // @TODO Action to remove boxes when not allowed or in wrong context:
-          // callback provided cftype, metabox id, and admin page context.
-          return;
+        if (!current_user_can($permission, $cfType->getPostId())) {
+          $removeBox = TRUE;
         }
       }
     }
-    return new static($cfType, $metabox, $metaboxInfo, $postId);
+    if (!empty($removeBox)) {
+      // Remove box from all contexts.
+      add_action('do_meta_boxes', function () use ($metabox, $cfType) {
+        foreach (['normal', 'side', 'advanced'] as $context) {
+          remove_meta_box($metabox, $cfType->getSingularName(), $context);
+        }
+      }, 1);
+      return;
+    }
+    return new static($cfType, $metabox, $metaboxInfo);
   }
 
   /**
