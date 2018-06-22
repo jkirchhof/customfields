@@ -82,6 +82,22 @@ class CustomFieldsField {
   protected $validationMessage;
 
   /**
+   * If TRUE, never persist (such as for validation-only fields).
+   *
+   * A custom persist method may still use the value, even by persisting it.
+   *
+   * @var bool
+   */
+  protected $neverPersist = FALSE;
+
+  /**
+   * Whether invalid values are persisted (though flagged) or not persisted.
+   *
+   * @var bool
+   */
+  protected $persistInvalidValues;
+
+  /**
    * Methods to call for initial field validation.
    *
    * Each element is an array:
@@ -91,7 +107,7 @@ class CustomFieldsField {
    *
    * @var array
    */
-  protected $fieldValidtionMethods;
+  protected $fieldValidationMethods;
 
   /**
    * Method to check validation in context of other validators.
@@ -140,18 +156,22 @@ class CustomFieldsField {
    *   Machine name of field.
    * @param array $fieldInfo
    *   Column definition.
-   * @param int $postId
-   *   Post ID (0 for new post) for which field is being built.
    */
-  protected function __construct(CustomFieldsType $cfType, string $field, array $fieldInfo, int $postId) {
+  protected function __construct(CustomFieldsType $cfType, string $field, array $fieldInfo) {
     $this->cfType = $cfType;
     $this->field = $field;
     $this->fieldInfo = $fieldInfo;
-    $this->postId;
+    $this->postId = $cfType->getPostId();
     $this->name = $fieldInfo['name'];
     $this->validationMessage = !empty($fieldInfo['error message']) ?
       $fieldInfo['error message'] :
       'The value of “' . $this->name . '” appears invalid.';
+    if (!empty($fieldInfo['type']) && $fieldInfo['type'] == 'validation only') {
+      $this->neverPersist = TRUE;
+    }
+    $this->persistInvalidValues = empty($fieldInfo['persist invalid values']) ?
+      FALSE :
+      TRUE;
     $this->setValue();
     $this->setValidators();
     $this->setContextualValidator();
@@ -174,21 +194,14 @@ class CustomFieldsField {
    *   Field object.
    */
   public static function buildField(CustomFieldsType $cfType, string $field, array $fieldInfo) {
-    $post = $cfType->getPost;
-    if (!empty($post) && !empty($post->ID)) {
-      $postId = $post->ID;
-    }
-    else {
-      $postId = 0;
-    }
     if (!empty($fieldInfo['requires']) && is_array($fieldInfo['requires'])) {
       foreach ($fieldInfo['requires'] as $permission) {
-        if (!current_user_can($permission, $post)) {
+        if (!current_user_can($permission, $cfType->getPostId())) {
           return;
         }
       }
     }
-    return new static($cfType, $field, $fieldInfo, $postId);
+    return new static($cfType, $field, $fieldInfo);
   }
 
   /**
@@ -199,6 +212,16 @@ class CustomFieldsField {
    */
   public function getField() {
     return $this->field;
+  }
+
+  /**
+   * Get post object ID relevant to current request.
+   *
+   * @return int
+   *   Wordpress post ID or 0.
+   */
+  public function getPostId() {
+    return $this->postId ?: 0;
   }
 
   /**
@@ -276,11 +299,21 @@ class CustomFieldsField {
       }
     }
     else {
-      $this->value = $this
-        ->cfType
-        ->getCf()
-        ->getStorage()
-        ->retreive($this->postId, $this->field);
+      if ($this->cfType->getUserRequestedSave()) {
+        if (empty($_POST[$this->field])) {
+          $this->value = '';
+        }
+        else {
+          $this->value = $_POST[$this->field];
+        }
+      }
+      else {
+        $this->value = $this
+          ->cfType
+          ->getCfs()
+          ->getStorage()
+          ->retrieve($this->postId, $this->field);
+      }
     }
   }
 
@@ -292,7 +325,9 @@ class CustomFieldsField {
     $fieldValidtionMethod = 'cf__' . $this->cfType->getPluralName() .
       '__' . $this->field . '__validationMethod';
     if (is_callable($fieldValidtionMethod)) {
-      $this->fieldValidtionMethods[] = [$fieldValidtionMethod];
+      $this->fieldValidationMethods[] = function ($input) use ($fieldValidtionMethod) {
+        return ($fieldValidtionMethod)($input);
+      };
     }
     if (!empty($this->fieldInfo['validate']) && is_array($this->fieldInfo['validate'])) {
       array_map(function ($validator) {
@@ -305,36 +340,33 @@ class CustomFieldsField {
         }
         switch ($validationType) {
           case 'not empty':
-            $this->fieldValidtionMethods[] = [
-              [$this, 'validateNotEmpty'],
-            ];
+            $this->fieldValidationMethods[] = function ($input) {
+              return $this->validateNotEmpty($input);
+            };
             break;
 
           case 'url':
-            $this->fieldValidtionMethods[] = [
-              [$this, 'validateIsUrl'],
-            ];
+            $this->fieldValidationMethods[] = function ($input) {
+              return $this->validateIsUrl($input);
+            };
             break;
 
           case 'min-length':
-            $this->fieldValidtionMethods[] = [
-              [$this, 'validateMinLength'],
-              $validationArgs,
-            ];
+            $this->fieldValidationMethods[] = function ($input) use ($validationArgs) {
+              return $this->validateMinLength($input, ...$validationArgs);
+            };
             break;
 
           case 'max-length':
-            $this->fieldValidtionMethods[] = [
-              [$this, 'validateMaxLength'],
-              $validationArgs,
-            ];
+            $this->fieldValidationMethods[] = function ($input) use ($validationArgs) {
+              return $this->validateMaxLength($input, ...$validationArgs);
+            };
             break;
 
           case 'pattern':
-            $this->fieldValidtionMethods[] = [
-              [$this, 'validatePattern'],
-              $validationArgs,
-            ];
+            $this->fieldValidationMethods[] = function ($input) use ($validationArgs) {
+              return $this->validatePattern($input, ...$validationArgs);
+            };
             break;
 
           default:
@@ -363,7 +395,9 @@ class CustomFieldsField {
     $fieldSanitizerMethod = 'cf__' . $this->cfType->getPluralName() .
       '__' . $this->field . '__sanitizerMethod';
     if (is_callable($fieldSanitizerMethod)) {
-      $this->fieldSanitizerMethods[] = [$fieldSanitizerMethod];
+      $this->fieldSanitizerMethods[] = function ($input) use ($fieldSanitizerMethod) {
+        return ($fieldSanitizerMethod)($input);
+      };
     }
     if (!empty($this->fieldInfo['sanitize']) && is_array($this->fieldInfo['sanitize'])) {
       array_map(function ($sanitizer) {
@@ -397,7 +431,7 @@ class CustomFieldsField {
       '__' . $this->field . '__renderMethod';
     if (is_callable($renderMethod)) {
       $this->renderMethod = function () use ($renderMethod) {
-        return $renderMethod();
+        return $renderMethod($this);
       };
     }
     else {
@@ -431,20 +465,27 @@ class CustomFieldsField {
    * Determine validation status of value.
    */
   protected function validateValue() {
-    $validationTestFailures = length($this->fieldValidationMethods);
-    foreach ($this->fieldValidationMethods as $validator) {
-      if (empty($validator[1])) {
-        $result = $validator[0]($this->value);
-      }
-      else {
-        $result = $validator[0]($this->value, ...$validator[1]);
-      }
-      if ($result) {
-        $validationTestFailures--;
+    $validationTestFailures = count($this->fieldValidationMethods);
+    if ($validationTestFailures) {
+      foreach ($this->fieldValidationMethods as $validator) {
+        if (($validator)($this->value)) {
+          $validationTestFailures--;
+        }
       }
     }
-    if (!$validationTestFailures) {
+    if (empty($validationTestFailures)) {
       $this->validationPassed = TRUE;
+    }
+    else {
+      $transintKey = $this->cfType->getTransientId();
+      $notifier = $this
+        ->cfType
+        ->getCfs()
+        ->getNotifier();
+      $notifier
+        ->setTranientKey($transintKey)
+        ->queueUserWarning($this->validationMessage)
+        ->queueFieldWarning($this->field);
     }
     $this->validationComplete = TRUE;
   }
@@ -454,12 +495,9 @@ class CustomFieldsField {
    */
   protected function sanitizeValue() {
     $value = $this->value;
-    foreach ($this->fieldSanitizerMethods as $sanitizer) {
-      if (empty($sanitizer[1])) {
-        $value = $sanitizer[0]($value);
-      }
-      else {
-        $value = $sanitizer[0]($value, ...$sanitizer[1]);
+    if (!empty($this->fieldSanitizerMethods)) {
+      foreach ($this->fieldSanitizerMethods as $sanitizer) {
+        $value = ($sanitizer)((string) $value);
       }
     }
     $this->sanitizationComplete = TRUE;
@@ -477,12 +515,34 @@ class CustomFieldsField {
 
   /**
    * Persist value to storage, if field is to be saved.
+   *
+   * @param int $postId
+   *   Wordpress ID of post to associate with data.
    */
-  public function persistValue() {
-    // @TODO:
-    // Check for custom persist method.
-    // Check if type or validity status means don't persist.
-    // Persist if allowed.
+  public function persistValue(int $postId) {
+    // If a custom persist method exists, it needs to handle all decisions
+    // including cases where it doesn't actually persist data.
+    $customPersistMethod = 'cf__' . $this->cfType->getPluralName() .
+      '__' . $this->field . '__persist';
+    if (is_callable($customPersistMethod)) {
+      ($customPersistMethod)($this);
+      return;
+    }
+    // Calling getValue() ensures that validation and sanitization occur.
+    $value = $this->getValue();
+    // Some fields never persist.
+    if (!$this->neverPersist &&
+    // Others require valid data.
+      ($this->validationPassed || $this->persistInvalidValues)) {
+      $persisted = $this
+        ->cfType
+        ->getCfs()
+        ->getStorage()
+        ->persist($postId, $this->field, $value);
+      if (!persisted) {
+        // @TODO throw exception if persist fails.
+      }
+    }
   }
 
   /**
