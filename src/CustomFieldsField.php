@@ -339,6 +339,12 @@ class CustomFieldsField {
             };
             break;
 
+          case 'email':
+            $this->fieldValidationMethods[] = function ($input) {
+              return $this->validateIsEmail($input);
+            };
+            break;
+
           case 'min-length':
             $this->fieldValidationMethods[] = function ($input) use ($validationArgs) {
               return $this->validateMinLength($input, ...$validationArgs);
@@ -556,6 +562,22 @@ class CustomFieldsField {
    */
   public function validateIsUrl(string $input) {
     if (filter_var($input, FILTER_VALIDATE_URL)) {
+      return TRUE;
+    }
+    return FALSE;
+  }
+
+  /**
+   * Validate that input string is a valid email.
+   *
+   * @param string $input
+   *   Input submitted by user.  Not yet sanitized.
+   *
+   * @return bool
+   *   TRUE if $input passes validator. Else FASLE.
+   */
+  public function validateIsEmail(string $input) {
+    if (filter_var($input, FILTER_VALIDATE_EMAIL)) {
       return TRUE;
     }
     return FALSE;
