@@ -109,8 +109,8 @@ class CustomFieldsType {
     if (!empty($definition['replace_archive_with_page'])) {
       $this->replaceArchiveWithPage();
     }
-    if (!empty($definition['create_shortcode'])) {
-      $this->createShortcode();
+    if (method_exists($this->object, 'shortcodeCallback')) {
+      add_shortcode($this->getPluralName(), [$this->object, 'shortcodeCallback']);
     }
     if (!empty($definition['add_columns'])) {
       $this->addColumnsToAdmin();
@@ -521,7 +521,7 @@ class CustomFieldsType {
   public function createPageToReplaceArchive() {
     $pluralName = $this->getPluralName();
     if (!get_page_by_path($pluralName)) {
-      if (!empty($this->getDefinition()['create_shortcode'])) {
+      if (method_exists($this->object, 'shortcodeCallback')) {
         $postContent = '[' . $pluralName . ']';
       }
       else {
@@ -592,25 +592,6 @@ class CustomFieldsType {
       array_push($css_class, 'current-menu-ancestor');
     }
     return $css_class;
-  }
-
-  /**
-   * Declare callback for shortcode, or notify admins if callback is missing.
-   */
-  protected function createShortcode() {
-    if (method_exists($this->object, 'shortcodeRender')) {
-      add_shortcode($this->getPluralName(), [$this->object, 'shortcodeRender']);
-    }
-    else {
-      $message = sprintf('<strong>Error defining shortcode for type ' .
-        '“%s”</strong><br />Shortcodes will not be processed as expected ' .
-        'and will likely be visible as raw text inside of posts.',
-        $this->getSingularName());
-      $this
-        ->cfs
-        ->getNotifier()
-        ->queueAdminNotice($message);
-    }
   }
 
   /**
