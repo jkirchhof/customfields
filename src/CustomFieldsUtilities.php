@@ -51,4 +51,28 @@ class CustomFieldsUtilities {
     return $hash;
   }
 
+  /**
+   * Grant administrator role all privledges for a post type.
+   *
+   * @param string $postTypePlural
+   *   Post type plural name.
+   */
+  public static function grantAdminAccess(string $postTypePlural) {
+    $admin = get_role('administrator');
+    foreach ([
+      'edit_',
+      'edit_others_',
+      'publish_',
+      'read_private_',
+      'delete_',
+      'delete_private_',
+      'delete_published_',
+      'delete_others_',
+      'edit_private_',
+      'edit_published_',
+    ] as $allowed_cap) {
+      $admin->add_cap($allowed_cap . $postTypePlural);
+    }
+  }
+
 }
