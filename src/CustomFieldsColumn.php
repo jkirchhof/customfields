@@ -22,6 +22,13 @@ class CustomFieldsColumn {
   protected $column;
 
   /**
+   * The camelCase version of column name.
+   *
+   * @var string
+   */
+  protected $columnCamelCase;
+
+  /**
    * Column definition.
    *
    * @var array
@@ -48,37 +55,47 @@ class CustomFieldsColumn {
   public function __construct(CustomFieldsType $cfType, string $column, array $columnInfo) {
     $this->cfType = $cfType;
     $this->column = $column;
+    $this->columnCamelCase = CustomFieldsUtilities::makeCamelCase($column);
     $this->columnInfo = $columnInfo;
     $singularName = $cfType->getSingularName();
     // Add columns.
-    add_filter('manage_' . $singularName . '_posts_columns',
-      [$this, 'addColumn']);
+    add_filter('manage_' . $singularName . '_posts_columns', [$this, 'addColumn']);
     // Populate columns.
-    if (!is_callable($this->cfType->getObject()->{$this->column . 'ColumnContent'})) {
-      $this->columnContentMethod = $this->cfType->getObject()->{$this->column . 'ColumnContent'};
+    if (method_exists($this->cfType->getObject(), $this->columnCamelCase . 'ColumnContent')) {
+      $this->columnContentMethod = function ($id) {
+        return $this->cfType->getObject()->{$this->columnCamelCase . 'ColumnContent'}($id, $this);
+      };
     }
-    add_action('manage_' . $singularName . '_posts_custom_column',
-      [$this, 'addColumnContent'], 10, 2);
+    else {
+      $this->columnContentMethod = function ($id) {
+        return $this->defaultColumnContent($id);
+      };
+    }
+    add_action('manage_' . $singularName . '_posts_custom_column', [$this, 'addColumnContent'], 10, 2);
     // Optionally make columns sortable.
     if (!empty($columnInfo['sort'])) {
-      add_filter('manage_edit-' . $singularName . '_sortable_columns',
-        [$this, 'makeColumnSortable']);
-      if (!is_callable($this->cfType->getObject()->{$this->column . 'ColumnSort'})) {
-        $columnSortMethod = $this->cfType->getObject()->{$this->column . 'ColumnSort'};
+      add_filter('manage_edit-' . $singularName . '_sortable_columns', [$this, 'makeColumnSortable']);
+      if (method_exists($this->cfType->getObject(), $this->columnCamelCase . 'ColumnSort')) {
+        $columnSortMethod = function ($wpQuery) {
+          $this->cfType->getObject()->{$this->columnCamelCase .
+            'ColumnSort'}($wpQuery, $this->column, $this->columnInfo);
+        };
       }
       else {
-        $columnSortMethod = $this->defaultColumnSort;
+        $columnSortMethod = function ($wpQuery) {
+          $this->defaultColumnSort($wpQuery, $this->column, $this->columnInfo);
+        };
       }
       // @TODO Consider adding option to call custom method with filter
       // 'posts_clauses' instead of this action, based on value in
-      // $columnInfo['sort'].  That would allow more complex sorting.
-      // If done, filter should call a closure similar to the one below
-      // for the action 'pre_get_posts', making sure custom function would
-      // only be called for queries related to columns (i.e. don't leave
-      // that requirement up to the custom function itself).
-      add_action('pre_get_posts', function ($wpQuery) {
-        if (is_admin() && $wpQuery->is_main_query() && $wpQuery->get('orderby') == $column) {
-          $columnSortMethod($wpQuery, $this->column, $this->columnInfo['sort']);
+      // $columnInfo['sort'].  That would allow more complex sorting. If done,
+      // filter should call a closure similar to the one below for the action
+      // 'pre_get_posts', making sure custom function would only be called for
+      // queries related to columns (i.e. don't leave that requirement up to the
+      // custom function itself).
+      add_action('pre_get_posts', function ($wpQuery) use ($columnSortMethod) {
+        if (is_admin() && $wpQuery->is_main_query() && $wpQuery->get('orderby') == $this->column) {
+          ($columnSortMethod)($wpQuery);
         }
       });
     }
@@ -94,10 +111,10 @@ class CustomFieldsColumn {
    *   Array of columns to print with new column added in place.
    */
   public function addColumn(array $columns) {
-    $def = $this->$cfType->getDefinition();
+    $columnInfo = $this->columnInfo;
     // Default to added columns sequentially between post title and author.
-    $position = empty($def['position']) ? -2 : (int) $def['position'];
-    $new_column = array($this->column => $def['header']);
+    $position = empty($columnInfo['position']) ? -2 : (int) $columnInfo['position'];
+    $new_column = array($this->column => $columnInfo['title']);
     $columns = array_slice($columns, 0, $position, TRUE) +
       $new_column + array_slice($columns, $position, NULL, TRUE);
     return $columns;
@@ -113,7 +130,7 @@ class CustomFieldsColumn {
    */
   public function addColumnContent(string $column, int $id) {
     if ($column == $this->column) {
-      echo $this->columnContentMethod($id, $this);
+      echo ($this->columnContentMethod)($id);
     }
   }
 
@@ -126,8 +143,12 @@ class CustomFieldsColumn {
    * @return string
    *   HTML to output into column.
    */
-  protected function defaultColumnContentMethod(int $id) {
-    return esc_html(get_post_meta($id, $this->column, TRUE));
+  protected function defaultColumnContent(int $id) {
+    return esc_html($this
+      ->cfType
+      ->getCfs()
+      ->getStorage()
+      ->retrieve($id, $this->column));
   }
 
   /**
@@ -151,19 +172,19 @@ class CustomFieldsColumn {
    *   Wordpress' WP_Query instance used to query pages for admin screen.
    * @param string $column
    *   Column name.
-   * @param string $columnSort
-   *   Sort order.
+   * @param array $columnInfo
+   *   Column definition.
    */
-  protected function defaultColumnSort(\WP_Query $wpQuery, string $column, string $columnSort) {
+  protected function defaultColumnSort(\WP_Query $wpQuery, string $column, array $columnInfo) {
     $wpQuery->set('orderby', 'meta_value');
     // Orderby meta key, defaults to column name.
-    if (empty($columnSort['orderby'])) {
-      $columnSort['orderby'] = $column;
+    if (empty($columnInfo['orderby'])) {
+      $columnInfo['orderby'] = $column;
     }
-    $wpQuery->set('meta_key', $columnSort['orderby']);
-    // Like wp_query, default order is DESC.
-    $order = (empty($columnSort['order']) || strtoupper($columnSort['order']) != 'ASC') ?
-      'DESC' : 'ASC';
+    $wpQuery->set('meta_key', $columnInfo['orderby']);
+    // Default order is ASC.
+    $order = (empty($_GET['order']) || strtoupper($_GET['order']) != 'DESC') ?
+      'ASC' : 'DESC';
     $wpQuery->set('order', $order);
   }
 
