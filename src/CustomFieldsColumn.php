@@ -168,12 +168,16 @@ class CustomFieldsColumn {
   /**
    * Default callback to sort column by post meta with key matching column name.
    *
+   * This assumes Wordpress "meta data" is used for storage.
+   *
    * @param \WP_Query $wpQuery
    *   Wordpress' WP_Query instance used to query pages for admin screen.
    * @param string $column
    *   Column name.
    * @param array $columnInfo
    *   Column definition.
+   *
+   * @TODO document that changing the storage class requires using a custom sort.
    */
   protected function defaultColumnSort(\WP_Query $wpQuery, string $column, array $columnInfo) {
     $wpQuery->set('orderby', 'meta_value');
