@@ -112,9 +112,7 @@ class CustomFieldsType {
     if (method_exists($this->object, 'shortcodeCallback')) {
       add_shortcode($this->getPluralName(), [$this->object, 'shortcodeCallback']);
     }
-    if (!empty($definition['add_columns'])) {
-      $this->addColumnsToAdmin();
-    }
+    $this->addColumnsToAdmin();
   }
 
   /**
@@ -599,8 +597,8 @@ class CustomFieldsType {
    */
   protected function addColumnsToAdmin() {
     $definition = $this->getDefinition();
-    if (!empty($definition['add_columns']) && is_array($definition['add_columns'])) {
-      foreach ($definition['add_columns'] as $column => $columnInfo) {
+    if (!empty($definition['add columns']) && is_array($definition['add columns'])) {
+      foreach ($definition['add columns'] as $column => $columnInfo) {
         new CustomFieldsColumn($this, $column, $columnInfo);
       }
     }

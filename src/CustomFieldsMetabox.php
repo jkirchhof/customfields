@@ -22,6 +22,13 @@ class CustomFieldsMetabox {
   protected $metabox;
 
   /**
+   * The camelCase version of metabox name.
+   *
+   * @var string
+   */
+  protected $metaboxCamelCase;
+
+  /**
    * Metabox definition.
    *
    * @var array
@@ -75,6 +82,7 @@ class CustomFieldsMetabox {
   protected function __construct(CustomFieldsType $cfType, string $metabox, array $metaboxInfo) {
     $this->cfType = $cfType;
     $this->metabox = $metabox;
+    $this->metaboxCamelCase = CustomFieldsUtilities::makeCamelCase($metabox);
     $this->metaboxInfo = $metaboxInfo;
     $this->postId = $cfType->getPostId();
     $this->title = empty($metaboxInfo['title']) ? NULL : $metaboxInfo['title'];
@@ -152,9 +160,9 @@ class CustomFieldsMetabox {
    * Look for render method, and set it. Fallback to printing fields in order.
    */
   protected function setRenderMethod() {
-    if (method_exists($this->cfType->getObject(), $this->metabox . 'Render')) {
+    if (method_exists($this->cfType->getObject(), $this->metaboxCamelCase . 'Render')) {
       $this->renderMethod = function () {
-        return $this->cfType->getObject()->{$this->metabox . 'Render'}();
+        return $this->cfType->getObject()->{$this->metaboxCamelCase . 'Render'}();
       };
     }
     else {

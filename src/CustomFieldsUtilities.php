@@ -75,4 +75,19 @@ class CustomFieldsUtilities {
     }
   }
 
+  /**
+   * Make a string "such as this" or such_as_this into camel case suchAsThis.
+   *
+   * @param string $string
+   *   A string "such as this" or such_as_this.
+   *
+   * @return string
+   *   A camel case string suchAsThis.
+   */
+  public static function makeCamelCase(string $string) {
+    return preg_replace_callback("/(?:_|\s)([a-z])/", function ($firstLetters) {
+      return strtoupper($firstLetters[1]);
+    }, $string);
+  }
+
 }
