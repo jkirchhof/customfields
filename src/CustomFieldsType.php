@@ -105,7 +105,7 @@ class CustomFieldsType {
     }
     add_filter('post_updated_messages', [$this, 'addWarningsToMessages']);
     add_action("add_meta_boxes_{$this->singularName}", [$this, 'prepareFields']);
-    add_action("save_post_{$this->singularName}", [$this, 'saveFieldsData']);
+    add_action("save_post_{$this->singularName}", [$this, 'saveFieldsData'], 10, 3);
     if (!empty($definition['replace_archive_with_page'])) {
       $this->replaceArchiveWithPage();
     }
@@ -345,12 +345,17 @@ class CustomFieldsType {
    *
    * @param int $postId
    *   Wordpress post ID related to current request.
+   * @param \WP_Post $postObject
+   *   WP post object (ignored).
+   * @param bool $update
+   *   Whether this is an existing post being updated or not.
    */
-  public function saveFieldsData(int $postId = 0) {
+  public function saveFieldsData(int $postId, \WP_Post $postObject, $update = FALSE) {
     // Don't include in auto-save.
-    if (defined('\DOING_AUTOSAVE') && \DOING_AUTOSAVE) {
+    if (defined('\DOING_AUTOSAVE') && \DOING_AUTOSAVE || !$update) {
       return;
     }
+
     // Method must handle its own permission check.
     if (!current_user_can('edit_page', $postId)) {
       return;
