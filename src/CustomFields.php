@@ -258,7 +258,7 @@ class CustomFields {
       }
       $className = "\\CustomFieldsDefinition\\$type\\" . ucfirst($type);
       if (class_exists($className)) {
-        $definitions[$type]['object'] = new $className($this);
+        $definitions[$type]['object'] = new $className();
       }
     }
     return $definitions;

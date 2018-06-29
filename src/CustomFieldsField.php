@@ -233,6 +233,16 @@ class CustomFieldsField {
   }
 
   /**
+   * Get CFs container for field.
+   *
+   * @return \CustomFields\CustomFields
+   *   Serves as DI container.
+   */
+  public function getCfs() {
+    return $this->cfType->getCfs();
+  }
+
+  /**
    * Get value, making sure validation methods have run.
    *
    * @var bool $sanitized
@@ -307,7 +317,6 @@ class CustomFieldsField {
       }
       else {
         $this->value = $this
-          ->cfType
           ->getCfs()
           ->getStorage()
           ->retrieve($this->postId, $this->field);
@@ -492,7 +501,6 @@ class CustomFieldsField {
   public function warnIsInvalid() {
     $transintKey = $this->cfType->getTransientId();
     $notifier = $this
-      ->cfType
       ->getCfs()
       ->getNotifier();
     $notifier
@@ -544,7 +552,6 @@ class CustomFieldsField {
     // Others require valid data.
       ($this->validationPassed || $this->persistInvalidValues)) {
       $persisted = $this
-        ->cfType
         ->getCfs()
         ->getStorage()
         ->persist($postId, $this->field, $value);
