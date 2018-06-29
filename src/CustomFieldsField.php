@@ -415,6 +415,12 @@ class CustomFieldsField {
             };
             break;
 
+            case 'trim':
+              $this->fieldSanitizerMethods[] = function ($input) {
+                return $this->sanitizeTrim($input);
+              };
+              break;
+
           default:
             throw new BadSanitizerException($this->cfType->getSingularName(), $this->field, $sanitizerType);
 
@@ -475,17 +481,24 @@ class CustomFieldsField {
       $this->validationPassed = TRUE;
     }
     else {
-      $transintKey = $this->cfType->getTransientId();
-      $notifier = $this
-        ->cfType
-        ->getCfs()
-        ->getNotifier();
-      $notifier
-        ->setTranientKey($transintKey)
-        ->queueUserWarning($this->validationMessage)
-        ->queueFieldWarning($this->field);
+      $this->warnIsInvalid();
     }
     $this->validationComplete = TRUE;
+  }
+
+  /**
+   * Queue error message for invalid field data.
+   */
+  public function warnIsInvalid() {
+    $transintKey = $this->cfType->getTransientId();
+    $notifier = $this
+      ->cfType
+      ->getCfs()
+      ->getNotifier();
+    $notifier
+      ->setTranientKey($transintKey)
+      ->queueUserWarning($this->validationMessage)
+      ->queueFieldWarning($this->field);
   }
 
   /**
@@ -653,6 +666,19 @@ class CustomFieldsField {
    */
   public function sanitizeStripHtml(string $input) {
     return wp_strip_all_tags($input);
+  }
+
+  /**
+   * Trim a string.
+   *
+   * @param string $input
+   *   Input submitted by user.
+   *
+   * @return string
+   *   Sanitized string.
+   */
+  public function sanitizeTrim(string $input) {
+    return trim($input);
   }
 
   /**
