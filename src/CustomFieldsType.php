@@ -103,7 +103,12 @@ class CustomFieldsType {
     if (!in_array($singularName, array_keys(get_post_types()))) {
       $this->declarePostType();
     }
+    // @TODO pass relevant data to Notifier; it should handle adding messages
+    // and removing stored transient (or whatever it uses).
     add_filter('post_updated_messages', [$this, 'addWarningsToMessages']);
+    add_action('add_meta_boxes', function () {
+      delete_transient($this->getTransientId());
+    }, 10, 0);
     add_action("add_meta_boxes_{$this->singularName}", [$this, 'prepareFields']);
     add_action("save_post_{$this->singularName}", [$this, 'saveFieldsData'], 10, 3);
     if (!empty($definition['replace_archive_with_page'])) {
