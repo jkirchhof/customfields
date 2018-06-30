@@ -170,7 +170,7 @@ class CustomFieldsField {
     $this->persistInvalidValues = empty($fieldInfo['persist invalid values']) ?
       FALSE :
       TRUE;
-    $this->setValue();
+    $this->setInitialValue();
     $this->setValidators();
     $this->setContextualValidator();
     $this->setSanitizers();
@@ -243,6 +243,16 @@ class CustomFieldsField {
   }
 
   /**
+   * Get post data for post related to field.
+   *
+   * @return array
+   *   Data Wordpress expects to save as post.
+   */
+  public function getPostData() {
+    return $this->cfType->getPostData();
+  }
+
+  /**
    * Get value, making sure validation methods have run.
    *
    * @var bool $sanitized
@@ -300,7 +310,7 @@ class CustomFieldsField {
   /**
    * Set initial value of field from post ID or default.
    */
-  protected function setValue() {
+  protected function setInitialValue() {
     if (!$this->postId) {
       if (!empty($this->fieldInfo['default'])) {
         $this->value = $this->fieldInfo['default'];
@@ -322,6 +332,27 @@ class CustomFieldsField {
           ->retrieve($this->postId, $this->field);
       }
     }
+  }
+
+  /**
+   * Set value. For external calls, such as from contextual validator.
+   *
+   * @param mixed $value
+   *   Value.
+   */
+  public function setValue($value) {
+    $this->value = $value;
+    $this->sanitizeValue();
+  }
+
+  /**
+   * Set post data for post related to field.
+   *
+   * @param array $postData
+   *   Data Wordpress expects to save as post.
+   */
+  public function setPostData(array $postData) {
+    $this->cfType->setPostData($postData);
   }
 
   /**
@@ -477,7 +508,7 @@ class CustomFieldsField {
   /**
    * Determine validation status of value.
    */
-  protected function validateValue() {
+  public function validateValue() {
     $validationTestFailures = count($this->fieldValidationMethods);
     if ($validationTestFailures) {
       foreach ($this->fieldValidationMethods as $validator) {
@@ -499,14 +530,30 @@ class CustomFieldsField {
    * Queue error message for invalid field data.
    */
   public function warnIsInvalid() {
-    $transintKey = $this->cfType->getTransientId();
+    $transientKey = $this->cfType->getTransientId();
     $notifier = $this
       ->getCfs()
       ->getNotifier();
     $notifier
-      ->setTranientKey($transintKey)
+      ->setTranientKey($transientKey)
       ->queueUserWarning($this->validationMessage)
       ->queueFieldWarning($this->field);
+  }
+
+  /**
+   * Queue message for field.
+   *
+   * @param string $message
+   *   Message to queue.
+   */
+  public function warnMessage(string $message) {
+    $transientKey = $this->cfType->getTransientId();
+    $notifier = $this
+      ->getCfs()
+      ->getNotifier();
+    $notifier
+      ->setTranientKey($transientKey)
+      ->queueUserWarning($message);
   }
 
   /**

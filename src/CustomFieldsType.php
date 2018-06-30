@@ -46,6 +46,13 @@ class CustomFieldsType {
   protected $cfs;
 
   /**
+   * Data Wordpress expects to save as post.
+   *
+   * @var array
+   */
+  protected $postData;
+
+  /**
    * Wordpress post object relevant to current request.
    *
    * @var int
@@ -110,7 +117,7 @@ class CustomFieldsType {
       delete_transient($this->getTransientId());
     }, 10, 0);
     add_action("add_meta_boxes_{$this->singularName}", [$this, 'prepareFields']);
-    add_action('pre_post_update', [$this, 'handleFieldsData'], 10, 2);
+    add_filter('wp_insert_post_data', [$this, 'handleFieldsData'], 20, 2);
     if (!empty($definition['replace_archive_with_page'])) {
       $this->replaceArchiveWithPage();
     }
@@ -168,6 +175,16 @@ class CustomFieldsType {
    */
   public function getCfs() {
     return $this->cfs;
+  }
+
+  /**
+   * Get post data for post related to field.
+   *
+   * @return array
+   *   Data Wordpress expects to save as post.
+   */
+  public function getPostData() {
+    return $this->postData;
   }
 
   /**
@@ -346,35 +363,38 @@ class CustomFieldsType {
   /**
    * Determine fields to save; validate, sanitize, issue warnings, and/or save.
    *
-   * Is a callback for WP action (such as save_post).
-   *
-   * @param int $postId
-   *   Wordpress post ID related to current request.
    * @param array $postData
-   *   Array of post data.
+   *   Data wordpress expects to save as post.
+   * @param array $postArray
+   *   Data related to post submission.
    */
-  public function handleFieldsData(int $postId, array $postData) {
+  public function handleFieldsData(array $postData, array $postArray) {
+    $postId = $postArray['ID'];
+    if (empty($postId)) {
+      return $postData;
+    }
     // Don't include in auto-save.
     if (defined('\DOING_AUTOSAVE') && \DOING_AUTOSAVE) {
-      return;
+      return $postData;
     }
     // Method must handle its own permission check.
     if (!current_user_can('edit_page', $postId)) {
-      return;
-    }
-    $nonce = isset($_POST['post_options_nonce']) ? $_POST['post_options_nonce'] : NULL;
-    if (!wp_verify_nonce($nonce, 'post_options_nonce')) {
-      // @TODO implement nonce per metabox; check all; return if any fail to match.
+      return $postData;
     }
     $this->userRequestedSave = TRUE;
     $this->prepareFields($postId);
     $metaboxes = $this->getMetaboxes();
     if (empty($metaboxes)) {
-      return;
+      return $postData;
     }
     $fieldsToSave = array_reduce($metaboxes, function ($fieldsToSave, $metabox) {
       return array_merge($fieldsToSave, $metabox->getMetaboxFields());
     }, []);
+    // Contextual validators have access to $this->postData via
+    // CustomFieldsField object passed to them. This allows modifying post
+    // values, including check on post status changes based on custom field
+    // values.
+    $this->postData = $postData;
     array_map(function ($field) {
       $field->callContextualValidator();
     }, $fieldsToSave);
@@ -391,7 +411,7 @@ class CustomFieldsType {
         }, $fieldsToSave);
       },
     10, 3);
-
+    return $this->postData;
   }
 
   /**
@@ -439,6 +459,16 @@ class CustomFieldsType {
     }
     $this->transientId = 'custom_post_message_' . $postId . '_' .
       get_current_user_id();
+  }
+
+  /**
+   * Set post data for post related to field.
+   *
+   * @param array $postData
+   *   Data Wordpress expects to save as post.
+   */
+  public function setPostData(array $postData) {
+    $this->postData = $postData;
   }
 
   /**
