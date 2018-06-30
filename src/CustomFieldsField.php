@@ -252,11 +252,11 @@ class CustomFieldsField {
    *   Field value, possibly invalid.
    */
   public function getValue($sanitized = TRUE) {
-    if (!$this->validationComplete) {
-      $this->validateValue();
-    }
     if (!$this->sanitizationComplete) {
       $this->sanitizeValue();
+    }
+    if (!$this->validationComplete) {
+      $this->validateValue();
     }
     if (!$sanitized) {
       return $this->value;
