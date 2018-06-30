@@ -110,7 +110,7 @@ class CustomFieldsType {
       delete_transient($this->getTransientId());
     }, 10, 0);
     add_action("add_meta_boxes_{$this->singularName}", [$this, 'prepareFields']);
-    add_action("save_post_{$this->singularName}", [$this, 'saveFieldsData'], 10, 3);
+    add_action('pre_post_update', [$this, 'handleFieldsData'], 10, 2);
     if (!empty($definition['replace_archive_with_page'])) {
       $this->replaceArchiveWithPage();
     }
@@ -350,17 +350,14 @@ class CustomFieldsType {
    *
    * @param int $postId
    *   Wordpress post ID related to current request.
-   * @param \WP_Post $postObject
-   *   WP post object (ignored).
-   * @param bool $update
-   *   Whether this is an existing post being updated or not.
+   * @param array $postData
+   *   Array of post data.
    */
-  public function saveFieldsData(int $postId, \WP_Post $postObject, $update = FALSE) {
+  public function handleFieldsData(int $postId, array $postData) {
     // Don't include in auto-save.
-    if (defined('\DOING_AUTOSAVE') && \DOING_AUTOSAVE || !$update) {
+    if (defined('\DOING_AUTOSAVE') && \DOING_AUTOSAVE) {
       return;
     }
-
     // Method must handle its own permission check.
     if (!current_user_can('edit_page', $postId)) {
       return;
@@ -381,9 +378,20 @@ class CustomFieldsType {
     array_map(function ($field) {
       $field->callContextualValidator();
     }, $fieldsToSave);
-    array_map(function ($field) use ($postId) {
-      $field->persistValue($postId);
-    }, $fieldsToSave);
+    // If updating (all posts are saved in draft before anthing else), field
+    // data is checked (in code above), WP saves core post data, and then field
+    // data is persisted.
+    add_action("save_post_{$this->singularName}",
+      function (int $postId, \WP_Post $postObject, $update = FALSE) use ($fieldsToSave) {
+        if (!$update) {
+          return;
+        }
+        array_map(function ($field) use ($postId) {
+          $field->persistValue($postId);
+        }, $fieldsToSave);
+      },
+    10, 3);
+
   }
 
   /**
