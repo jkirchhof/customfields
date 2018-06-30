@@ -126,7 +126,7 @@ class CustomFieldsTypeTest extends \WP_UnitTestCase {
   public function testGetDefinition() {
     $cf = new CustomFields(new WPOptionsCache(), new TestNotifier(), new WPMetaData());
     $cf->initialize(__DIR__ . '/definitions');
-    $result = CustomFieldsType::buildTypes($cf)['testsample']->getDefinition()['wp_definition'];
+    $result = CustomFieldsType::buildTypes($cf)['testsample']->getDefinition()['wp definition'];
     $expected = [
       'labels' => [
         'name' => 'Sample',

@@ -118,7 +118,7 @@ class CustomFieldsType {
     }, 10, 0);
     add_action("add_meta_boxes_{$this->singularName}", [$this, 'prepareFields']);
     add_filter('wp_insert_post_data', [$this, 'handleFieldsData'], 20, 2);
-    if (!empty($definition['replace_archive_with_page'])) {
+    if (!empty($definition['replace archive with page'])) {
       $this->replaceArchiveWithPage();
     }
     if (method_exists($this->object, 'shortcodeCallback')) {
@@ -286,10 +286,10 @@ class CustomFieldsType {
     $defs = [];
     foreach ($cfs->getDefinitions() as $name => $defArray) {
       try {
-        if (!empty($defArray) && !empty($defArray['singular_name'])
-          && !empty($defArray['plural_name'])) {
-          $singularName = $defArray['singular_name'];
-          $pluralName = $defArray['plural_name'];
+        if (!empty($defArray) && !empty($defArray['singular name'])
+          && !empty($defArray['plural name'])) {
+          $singularName = $defArray['singular name'];
+          $pluralName = $defArray['plural name'];
         }
         else {
           throw new BadDefinitionException();
@@ -303,7 +303,7 @@ class CustomFieldsType {
           ->getNotifier()
           ->queueAdminNotice($message);
       }
-      if (!empty($defArray) && !empty($defArray['wp_definition'])) {
+      if (!empty($defArray) && !empty($defArray['wp definition'])) {
         $defs[$name] = new static($singularName, $pluralName, $defArray, $cfs);
       }
     }
@@ -315,7 +315,7 @@ class CustomFieldsType {
    */
   public function declarePostType() {
     $name = $this->getSingularName();
-    $def = $this->getDefinition()['wp_definition'];
+    $def = $this->getDefinition()['wp definition'];
     register_post_type($name, $def);
   }
 
@@ -603,8 +603,8 @@ class CustomFieldsType {
         'pagename' => $this->getPluralName(),
         'post_parent' => 0,
       ]);
-      if (is_array($this->definition['replace_archive_with_page'])) {
-        $preferredTemplates = $this->definition['replace_archive_with_page'];
+      if (is_array($this->definition['replace archive with page'])) {
+        $preferredTemplates = $this->definition['replace archive with page'];
       }
       else {
         $preferredTemplates = ['page.php'];

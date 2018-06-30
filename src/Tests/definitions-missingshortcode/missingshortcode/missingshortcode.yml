@@ -1,6 +1,7 @@
-singular_name: missingshortcode
-plural_name: missingshortcodes
-wp_definition:
+singular name: missingshortcode
+plural name: missingshortcodes
+
+wp definition:
   labels:
     name: Missingshortcode
     singular_name: Missingshortcode

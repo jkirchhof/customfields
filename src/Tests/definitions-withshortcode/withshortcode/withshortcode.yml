@@ -1,7 +1,7 @@
-singular_name: withshortcode
-plural_name: withshortcodes
+singular name: withshortcode
+plural name: withshortcodes
 
-wp_definition:
+wp definition:
   labels:
     name: With Shortcodes
     singular_name: With Shortcode
@@ -13,5 +13,5 @@ wp_definition:
   exclude_from_search: false
   hierarchical: true
 
-replace_archive_with_page: true
+replace archive with page: true
 create_shortcode: true

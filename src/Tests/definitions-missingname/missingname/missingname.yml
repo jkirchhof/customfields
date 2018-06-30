@@ -1,5 +1,6 @@
-plural_name: missingshortcodes
-wp_definition:
+plural name: missingshortcodes
+
+wp definition:
   labels:
     name: Missingshortcode
     singular_name: Missingshortcode
@@ -10,4 +11,3 @@ wp_definition:
   public: true
   exclude_from_search: false
   hierarchical: true
-create_shortcode: true

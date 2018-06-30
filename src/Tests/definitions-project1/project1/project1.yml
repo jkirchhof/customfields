@@ -1,8 +1,8 @@
-singular_name: project1
-plural_name: projects1
+singular name: project1
+plural name: projects1
 
 
-wp_definition:
+wp definition:
   labels:
     name: Projects
     singular_name: Project
@@ -35,8 +35,7 @@ wp_definition:
   menu_icon: dashicons-analytics
 
 
-replace_archive_with_page: true
-#create_shortcode: true
+replace archive with page: true
 
 
 fields:

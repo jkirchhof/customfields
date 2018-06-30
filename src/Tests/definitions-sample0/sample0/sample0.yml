@@ -1,7 +1,7 @@
-singular_name: sample0
-plural_name: samples0
+singular name: sample0
+plural name: samples0
 
-wp_definition:
+wp definition:
   labels:
     name: Sample
     singular_name: Sample
@@ -13,5 +13,5 @@ wp_definition:
   exclude_from_search: false
   hierarchical: true
 
-replace_archive_with_page: true
+replace archive with page: true
 #create_shortcode: true

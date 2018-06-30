@@ -108,9 +108,9 @@ class CustomFieldsTest extends \WP_UnitTestCase {
     $cf->initialize(__DIR__ . '/definitions');
     $expected = [
       'testsample' => [
-        'singular_name' => 'testsample',
-        'plural_name' => 'testsamples',
-        'wp_definition' => [
+        'singular name' => 'testsample',
+        'plural name' => 'testsamples',
+        'wp definition' => [
           'labels' => [
             'name' => 'Sample',
             'singular_name' => 'Sample',
@@ -125,9 +125,9 @@ class CustomFieldsTest extends \WP_UnitTestCase {
         ],
       ],
       'testsample1' => [
-        'singular_name' => 'testsample1',
-        'plural_name' => 'testsample1s',
-        'wp_definition' => [
+        'singular name' => 'testsample1',
+        'plural name' => 'testsample1s',
+        'wp definition' => [
           'labels' => [
             'name' => 'testsample1',
             'singular_name' => 'Sample1',

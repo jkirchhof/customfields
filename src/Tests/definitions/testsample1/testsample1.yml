@@ -1,6 +1,7 @@
-singular_name: testsample1
-plural_name: testsample1s
-wp_definition:
+singular name: testsample1
+plural name: testsample1s
+
+wp definition:
   labels:
     name: testsample1
     singular_name: Sample1
