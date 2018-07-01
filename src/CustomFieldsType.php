@@ -113,10 +113,10 @@ class CustomFieldsType {
     // @TODO pass relevant data to Notifier; it should handle adding messages
     // and removing stored transient (or whatever it uses).
     add_filter('post_updated_messages', [$this, 'addWarningsToMessages']);
-    add_action('add_meta_boxes', function () {
-      delete_transient($this->getTransientId());
-    }, 10, 0);
     add_action("add_meta_boxes_{$this->singularName}", [$this, 'prepareFields']);
+    add_action("add_meta_boxes_{$this->singularName}", function () {
+      delete_transient($this->getTransientId());
+    }, 11, 0);
     add_filter('wp_insert_post_data', [$this, 'handleFieldsData'], 20, 2);
     if (!empty($definition['replace archive with page'])) {
       $this->replaceArchiveWithPage();
@@ -370,7 +370,7 @@ class CustomFieldsType {
    */
   public function handleFieldsData(array $postData, array $postArray) {
     $postId = $postArray['ID'];
-    if (empty($postId)) {
+    if (empty($postId) || $postArray['post_type'] != $this->getSingularName()) {
       return $postData;
     }
     // Don't include in auto-save.
