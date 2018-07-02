@@ -160,9 +160,9 @@ class CustomFieldsMetabox {
    * Look for render method, and set it. Fallback to printing fields in order.
    */
   protected function setRenderMethod() {
-    if (method_exists($this->cfType->getObject(), $this->metaboxCamelCase . 'Render')) {
+    if (method_exists($this->cfType->getObject(), $this->metaboxCamelCase . 'MetaboxRender')) {
       $this->renderMethod = function () {
-        return $this->cfType->getObject()->{$this->metaboxCamelCase . 'Render'}();
+        return $this->cfType->getObject()->{$this->metaboxCamelCase . 'MetaboxRender'}($this);
       };
     }
     else {
