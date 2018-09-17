@@ -105,6 +105,13 @@ class CustomFieldsField {
   protected $persistInvalidValues;
 
   /**
+   * Whether empty values are persisted (though flagged) or not persisted.
+   *
+   * @var bool
+   */
+  protected $persistEmptyValues;
+
+  /**
    * Methods to call for initial field validation.
    *
    * @var array
@@ -168,6 +175,9 @@ class CustomFieldsField {
       $this->neverPersist = TRUE;
     }
     $this->persistInvalidValues = empty($fieldInfo['persist invalid values']) ?
+      FALSE :
+      TRUE;
+    $this->persistEmptyValues = empty($fieldInfo['persist empty values']) ?
       FALSE :
       TRUE;
     $this->setInitialValue();
@@ -595,9 +605,12 @@ class CustomFieldsField {
     // Calling getValue() ensures that validation and sanitization occur.
     $value = $this->getValue();
     // Some fields never persist.
-    if (!$this->neverPersist &&
     // Others require valid data.
-      ($this->validationPassed || $this->persistInvalidValues)) {
+    if (!$this->neverPersist &&
+      ($this->validationPassed || $this->persistInvalidValues ||
+        ($this->persistEmptyValues && empty($value))
+      )
+    ) {
       $persisted = $this
         ->getCfs()
         ->getStorage()
