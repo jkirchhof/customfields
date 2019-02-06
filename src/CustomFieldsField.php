@@ -112,6 +112,13 @@ class CustomFieldsField {
   protected $persistEmptyValues;
 
   /**
+   * Empty values are always valid, overriding other validators.
+   *
+   * @var bool
+   */
+  protected $emptyIsValid;
+
+  /**
    * Methods to call for initial field validation.
    *
    * @var array
@@ -178,6 +185,9 @@ class CustomFieldsField {
       FALSE :
       TRUE;
     $this->persistEmptyValues = empty($fieldInfo['persist empty values']) ?
+      FALSE :
+      TRUE;
+    $this->emptyIsValid = empty($fieldInfo['empty is valid']) ?
       FALSE :
       TRUE;
     $this->setInitialValue();
@@ -527,7 +537,8 @@ class CustomFieldsField {
         }
       }
     }
-    if (empty($validationTestFailures)) {
+    if (empty($validationTestFailures) ||
+      ($this->emptyIsValid && empty($this->value))) {
       $this->validationPassed = TRUE;
     }
     else {
